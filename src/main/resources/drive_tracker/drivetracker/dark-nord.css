@@ -1,0 +1,17 @@
+/* Darker Nord theme */
+
+.bg-default {
+    -fx-background-color: #0c255e;
+}
+
+.bg-subtle {
+    -fx-background-color: #0b2052;
+}
+
+.bg-emphasis {
+    -fx-background-color: #050e23;
+}
+
+.bg-inset {
+    -fx-background-color: #030918;
+}

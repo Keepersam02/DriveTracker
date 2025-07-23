@@ -11,8 +11,8 @@ public class FileEntry {
     private boolean isDirectory;
     private long size;
     private String hash;
-    private LocalDateTime lastModified;
-    private LocalDateTime dateCreated;
+    private long lastModified;
+    private long dateCreated;
 
     ArrayList<FileEntry> subFileEntries;
 
@@ -24,17 +24,7 @@ public class FileEntry {
         this.path = path;
     }
 
-    public FileEntry(String name, String path, boolean isDirectory, long size, String hash, LocalDateTime lastModified, LocalDateTime dateCreated) {
-        this.name = name;
-        this.path = path;
-        this.isDirectory = isDirectory;
-        this.size = size;
-        this.hash = hash;
-        this.lastModified = lastModified;
-        this.dateCreated = dateCreated;
-    }
-
-    public FileEntry(String name, String path, boolean isDirectory, long size, String hash, LocalDateTime lastModified, LocalDateTime dateCreated, ArrayList<FileEntry> subFileEntries) {
+    public FileEntry(String name, String path, boolean isDirectory, long size, String hash, long lastModified, long dateCreated, ArrayList<FileEntry> subFileEntries) {
         this.name = name;
         this.path = path;
         this.isDirectory = isDirectory;
@@ -43,6 +33,16 @@ public class FileEntry {
         this.lastModified = lastModified;
         this.dateCreated = dateCreated;
         this.subFileEntries = subFileEntries;
+    }
+
+    public FileEntry(String name, String path, boolean isDirectory, long size, String hash, long lastModified, long dateCreated) {
+        this.name = name;
+        this.path = path;
+        this.isDirectory = isDirectory;
+        this.size = size;
+        this.hash = hash;
+        this.lastModified = lastModified;
+        this.dateCreated = dateCreated;
     }
 
     public String getName() {
@@ -85,19 +85,19 @@ public class FileEntry {
         this.hash = hash;
     }
 
-    public LocalDateTime getLastModified() {
+    public long getLastModified() {
         return lastModified;
     }
 
-    public void setLastModified(LocalDateTime lastModified) {
+    public void setLastModified(long lastModified) {
         this.lastModified = lastModified;
     }
 
-    public LocalDateTime getDateCreated() {
+    public long getDateCreated() {
         return dateCreated;
     }
 
-    public void setDateCreated(LocalDateTime dateCreated) {
+    public void setDateCreated(long dateCreated) {
         this.dateCreated = dateCreated;
     }
 

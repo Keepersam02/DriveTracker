@@ -6,24 +6,24 @@ import java.util.Objects;
 
 public class Project implements ListItem {
     private String name;
-    private LocalDateTime dateCreated;
-    private LocalDateTime lastModified;
+    private long dateCreated;
+    private long lastModified;
     private ArrayList<FileTree> drives;
 
     public Project() {
     }
 
-    public Project(String name, LocalDateTime dateCreated, LocalDateTime lastModified) {
-        this.name = name;
-        this.dateCreated = dateCreated;
-        this.lastModified = lastModified;
-    }
-
-    public Project(String name, LocalDateTime dateCreated, LocalDateTime lastModified, ArrayList<FileTree> drives) {
+    public Project(String name, long dateCreated, long lastModified, ArrayList<FileTree> drives) {
         this.name = name;
         this.dateCreated = dateCreated;
         this.lastModified = lastModified;
         this.drives = drives;
+    }
+
+    public Project(String name, long dateCreated, long lastModified) {
+        this.name = name;
+        this.dateCreated = dateCreated;
+        this.lastModified = lastModified;
     }
 
     public String getName() {
@@ -34,19 +34,19 @@ public class Project implements ListItem {
         this.name = name;
     }
 
-    public LocalDateTime getDateCreated() {
+    public long getDateCreated() {
         return dateCreated;
     }
 
-    public void setDateCreated(LocalDateTime dateCreated) {
+    public void setDateCreated(long dateCreated) {
         this.dateCreated = dateCreated;
     }
 
-    public LocalDateTime getLastModified() {
+    public long getLastModified() {
         return lastModified;
     }
 
-    public void setLastModified(LocalDateTime lastModified) {
+    public void setLastModified(long lastModified) {
         this.lastModified = lastModified;
     }
 

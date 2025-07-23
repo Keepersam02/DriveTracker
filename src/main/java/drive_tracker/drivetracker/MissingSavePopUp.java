@@ -1,13 +1,22 @@
 package drive_tracker.drivetracker;
 
+import com.google.gson.Gson;
+import data_organization.CentralData;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import javax.swing.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class MissingSavePopUp {
+    CentralData centralData;
     public String HandleMissingSaveFile(Stage primaryStage) {
         Stage missingSavePopUp = new Stage();
         missingSavePopUp.initModality(Modality.APPLICATION_MODAL);
@@ -15,7 +24,7 @@ public class MissingSavePopUp {
 
         FXMLLoader fxmlLoader = new FXMLLoader(MissingSavePopUp.class.getResource("missing-save-popup.fxml"));
         try {
-            Scene baseScene = new Scene(fxmlLoader.load(), 400, 600);
+            Scene baseScene = new Scene(fxmlLoader.load(), 600, 400);
             baseScene.getStylesheets().add(String.valueOf(getClass().getResource("/atlantafx/base/css/base.css")));
             baseScene.getStylesheets().add(String.valueOf(getClass().getResource("/atlantafx/base/css/nord-dark.css")));
             baseScene.getStylesheets().add(String.valueOf(getClass().getResource("dark-nord.css")));
@@ -30,11 +39,4 @@ public class MissingSavePopUp {
         return null;
     }
 
-    public String FindMissingSave(Stage primaryStage) {
-        return null;
-    }
-
-    public String CreateNewSave(Stage primaryStage) {
-        return null;
-    }
 }

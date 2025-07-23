@@ -29,8 +29,7 @@ import java.util.Objects;
 
 public class MainPage extends Application {
     String saveFilePath;
-    ArrayList<Client> clientList = new ArrayList<>();
-    ArrayList<Project> projectList = new ArrayList<>();
+
     public static void main(String[] args) {
 
         launch(args);
@@ -38,6 +37,21 @@ public class MainPage extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        FXMLLoader fxmlLoader = new FXMLLoader(MainPage.class.getResource("main-page.fxml"));
+        try {
+            Scene scene = new Scene(fxmlLoader.load(), 1920, 1080);
+            scene.getStylesheets().add(String.valueOf(getClass().getResource("/atlantafx/base/css/base.css")));
+            scene.getStylesheets().add(String.valueOf(getClass().getResource("/atlantafx/base/css/nord-dark.css")));
+            scene.getStylesheets().add(String.valueOf(getClass().getResource("dark-nord.css")));
+
+
+            primaryStage.setTitle("Drive Tracker");
+            primaryStage.setScene(scene);
+            primaryStage.show();
+        } catch (IOException e) {
+            System.out.println("IO exception " + e.getMessage());
+        }
+
         Config fileConfig = new Config();
         String saveFilePath = fileConfig.loadSaveFileLocation();
         ArrayList<ListItem> centralData = null;
@@ -58,20 +72,7 @@ public class MainPage extends Application {
             }
         }
 
-        FXMLLoader fxmlLoader = new FXMLLoader(MainPage.class.getResource("main-page.fxml"));
-        try {
-            Scene scene = new Scene(fxmlLoader.load(), 1920, 1080);
-            scene.getStylesheets().add(String.valueOf(getClass().getResource("/atlantafx/base/css/base.css")));
-            scene.getStylesheets().add(String.valueOf(getClass().getResource("/atlantafx/base/css/nord-dark.css")));
-            scene.getStylesheets().add(String.valueOf(getClass().getResource("dark-nord.css")));
 
-
-            primaryStage.setTitle("Drive Tracker");
-            primaryStage.setScene(scene);
-            primaryStage.show();
-        } catch (IOException e) {
-            System.out.println("IO exception " + e.getMessage());
-        }
     }
 
 

@@ -8,7 +8,7 @@
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="drive_tracker.drivetracker.MissingSavePopupController">
    <children>
-      <StackPane prefHeight="400.0" prefWidth="600.0">
+      <StackPane fx:id="menuPane" prefHeight="400.0" prefWidth="600.0">
          <children>
             <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Could not find save file" translateY="-50.0">
                <font>
@@ -16,7 +16,7 @@
                </font>
             </Text>
             <Button fx:id="createNew" mnemonicParsing="false" text="Create New Save" translateX="85.0" translateY="25.0" />
-            <Button fx:id="findMissing" mnemonicParsing="false" text="Find Existing Save" translateX="-85.0" translateY="25.0" />
+            <Button fx:id="findMissingButton" mnemonicParsing="false" onAction="#findMissingButtonClick" text="Find Existing Save" translateX="-85.0" translateY="25.0" />
          </children>
       </StackPane>
    </children>

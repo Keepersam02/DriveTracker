@@ -3,6 +3,7 @@ package drive_tracker.drivetracker;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
+import data_handling.Config;
 import data_organization.CentralData;
 import javafx.animation.FadeTransition;
 import javafx.animation.SequentialTransition;
@@ -10,6 +11,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
@@ -17,20 +19,22 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 
 public class MissingSavePopupController {
 
+    private File dirFile;
     @FXML
     private Text titleText, messageText;
+
+    @FXML
+    private TextField fileNameTextField;
 
     @FXML
     private StackPane menuPane, createNewPane, findMissingPane;
 
     @FXML
-    private Button findMissingButton, createNewButton;
+    private Button findMissingButton, createNewButton, saveFileNameButton;
 
     @FXML
     public void initialize() {
@@ -76,8 +80,50 @@ public class MissingSavePopupController {
         MissingSavePopUp missingSavePopUp = new MissingSavePopUp();
 
         Stage stage = (Stage) menuPane.getScene().getWindow();
+        stage.setAlwaysOnTop(true);
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Pick parent directory.");
+        dirFile = directoryChooser.showDialog(stage);
 
+        if (dirFile != null) {
+            menuPane.setVisible(false);
+            menuPane.setDisable(true);
+            menuPane.setMouseTransparent(true);
+
+            createNewPane.setDisable(false);
+            createNewPane.setVisible(true);
+            createNewPane.setMouseTransparent(false);
+        }
+
+    }
+
+    @FXML
+    private void saveFileNameButtonClick(ActionEvent event) {
+        String fileName = fileNameTextField.getText();
+        StringBuilder builder = new StringBuilder();
+
+        try {
+            builder.append(dirFile.getAbsolutePath());
+        } catch (NullPointerException n) {
+             ErrLogger.error("Null file passed when not allowed.", n);
+             //Handle going back
+        } catch (SecurityException s) {
+            ErrLogger.warn("Could not access specified directory | Security Issue");
+            //Handle going back
+        }
+
+        builder.append("/");
+        builder.append(fileName);
+        builder.append(".json");
+        String saveFilePath = builder.toString();
+
+        try {
+            FileWriter fileWriter = new FileWriter(saveFilePath);
+            Config.setSavePath(saveFilePath);
+            System.out.println(Config.getSavePath());
+        } catch (IOException i) {
+            ErrLogger.warn("Could not open new file");
+            //Handle going back with message
+        }
     }
 }

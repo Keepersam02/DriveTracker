@@ -37,6 +37,7 @@ public class MainPage extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
         FXMLLoader fxmlLoader = new FXMLLoader(MainPage.class.getResource("main-page.fxml"));
         try {
             Scene scene = new Scene(fxmlLoader.load(), 1920, 1080);

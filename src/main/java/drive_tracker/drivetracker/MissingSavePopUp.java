@@ -34,7 +34,8 @@ public class MissingSavePopUp {
             missingSavePopUp.setScene(baseScene);
             missingSavePopUp.show();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            ErrLogger.error("Failed to load missing save screen", e);
+
         }
 
         MissingSavePopupController missingSavePopupController = new MissingSavePopupController();

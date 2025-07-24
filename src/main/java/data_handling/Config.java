@@ -1,46 +1,58 @@
 package data_handling;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
 public class Config {
-    public static String SAVE_PATH;
+    private String saveFilePath;
+    private String version;
 
-    public void writeSaveFile(String savePath) {
-        Properties prop = new Properties();
-        if (savePath != null) {
-            prop.setProperty("save.path", savePath);
-        }
-
+    public void writeSaveFilePath(String saveFilePath) {
+        Config config = new Config();
         try {
-            FileOutputStream stream = new FileOutputStream("config.properties");
-            prop.store(stream, "Save File Location");
-        } catch (IOException e) {
-            System.err.println("Could not write to config file: " + e.getMessage());
+            FileInputStream fileInputStream = new FileInputStream("config.json");
+            Gson gson = new Gson();
+            config = gson.fromJson(fileInputStream.toString(), Config.class);
+        } catch (FileNotFoundException f) {
+            config = new Config(saveFilePath, "0.0.1");
+            Gson gson = new Gson();
+            String gsonString;
+            try {
+                gsonString = gson.toJson(config);
+            } catch (JsonIOException j) {
+
+            }
+
         }
     }
 
-    public String loadSaveFileLocation() {
-        String saveFilePath;
-        Properties prop = new Properties();
-        try {
-            FileInputStream input = new FileInputStream("config.properties");
-            prop.load(input);
-        } catch (IOException e) {
-            writeSaveFile(null);
-            return null;
-        }
-
-        return saveFilePath = prop.getProperty("save.path");
+    public Config() {
     }
 
-    public static String getSavePath() {
-        return SAVE_PATH;
+    public Config(String saveFilePath, String version) {
+        this.saveFilePath = saveFilePath;
+        this.version = version;
     }
 
-    public static void setSavePath(String savePath) {
-        SAVE_PATH = savePath;
+    public String getSaveFilePath() {
+        return saveFilePath;
+    }
+
+    public void setSaveFilePath(String saveFilePath) {
+        this.saveFilePath = saveFilePath;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

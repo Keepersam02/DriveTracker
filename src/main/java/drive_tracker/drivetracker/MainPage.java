@@ -54,13 +54,11 @@ public class MainPage extends Application {
 
         Config fileConfig = new Config();
         String saveFilePath = fileConfig.loadSaveFileLocation();
-        ArrayList<ListItem> centralData = null;
         Application.setUserAgentStylesheet(new NordDark().getUserAgentStylesheet());
 
         if (saveFilePath == null) {
             MissingSavePopUp missingSavePopUp = new MissingSavePopUp();
             missingSavePopUp.HandleMissingSaveFile(primaryStage);
-            centralData = new ArrayList<>();
         } else {
             try {
                 FileReader reader = new FileReader(saveFilePath);

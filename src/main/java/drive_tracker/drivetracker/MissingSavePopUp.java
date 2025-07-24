@@ -17,7 +17,8 @@ import java.util.ArrayList;
 
 public class MissingSavePopUp {
     CentralData centralData;
-    public String HandleMissingSaveFile(Stage primaryStage) {
+    String filePath;
+    public void HandleMissingSaveFile(Stage primaryStage) {
         Stage missingSavePopUp = new Stage();
         missingSavePopUp.initModality(Modality.APPLICATION_MODAL);
         missingSavePopUp.initOwner(primaryStage);
@@ -36,7 +37,10 @@ public class MissingSavePopUp {
             throw new RuntimeException(e);
         }
 
-        return null;
+        MissingSavePopupController missingSavePopupController = new MissingSavePopupController();
+
+
+
     }
 
 }

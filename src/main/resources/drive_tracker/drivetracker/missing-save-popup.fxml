@@ -10,14 +10,20 @@
    <children>
       <StackPane fx:id="menuPane" prefHeight="400.0" prefWidth="600.0">
          <children>
-            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Could not find save file" translateY="-50.0">
+            <Text fx:id="titleText" strokeType="OUTSIDE" strokeWidth="0.0" text="Could not find save file" translateY="-50.0">
                <font>
                   <Font name="Microsoft Sans Serif" size="42.0" />
                </font>
             </Text>
             <Button fx:id="createNew" mnemonicParsing="false" text="Create New Save" translateX="85.0" translateY="25.0" />
             <Button fx:id="findMissingButton" mnemonicParsing="false" onAction="#findMissingButtonClick" text="Find Existing Save" translateX="-85.0" translateY="25.0" />
+            <Text fx:id="messageText" strokeType="OUTSIDE" strokeWidth="0.0" translateY="85.0">
+               <font>
+                  <Font name="Microsoft Sans Serif" size="24.0" />
+               </font>
+            </Text>
          </children>
       </StackPane>
+      <StackPane prefHeight="400.0" prefWidth="600.0" />
    </children>
 </AnchorPane>

@@ -26,6 +26,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class MainPage extends Application {
     String saveFilePath;
@@ -37,6 +39,24 @@ public class MainPage extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        Config fileConfig = new Config();
+        String saveFilePath = fileConfig.loadSaveFilePath();
+        Application.setUserAgentStylesheet(new NordDark().getUserAgentStylesheet());
+
+        if (saveFilePath == null) {
+            MissingSavePopUp missingSavePopUp = new MissingSavePopUp();
+            missingSavePopUp.HandleMissingSaveFile(primaryStage);
+        } else {
+            try {
+                FileReader reader = new FileReader(saveFilePath);
+
+            } catch (FileNotFoundException f) {
+
+                MissingSavePopUp missingSavePopUp = new MissingSavePopUp();
+                missingSavePopUp.HandleMissingSaveFile(primaryStage);
+
+            }
+        }
 
         FXMLLoader fxmlLoader = new FXMLLoader(MainPage.class.getResource("main-page.fxml"));
         try {
@@ -53,23 +73,7 @@ public class MainPage extends Application {
             System.out.println("IO exception " + e.getMessage());
         }
 
-        Config fileConfig = new Config();
-        String saveFilePath = fileConfig.loadSaveFileLocation();
-        Application.setUserAgentStylesheet(new NordDark().getUserAgentStylesheet());
 
-        if (saveFilePath == null) {
-            MissingSavePopUp missingSavePopUp = new MissingSavePopUp();
-            missingSavePopUp.HandleMissingSaveFile(primaryStage);
-        } else {
-            try {
-                FileReader reader = new FileReader(saveFilePath);
-
-            } catch (FileNotFoundException f) {
-                MissingSavePopUp missingSavePopUp = new MissingSavePopUp();
-                missingSavePopUp.HandleMissingSaveFile(primaryStage);
-
-            }
-        }
 
 
     }

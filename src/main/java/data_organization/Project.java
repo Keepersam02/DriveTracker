@@ -58,6 +58,10 @@ public class Project implements ListItem {
         this.drives = drives;
     }
 
+    public String interfaceGetName() {
+        return this.getName();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

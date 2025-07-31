@@ -16,7 +16,7 @@ import java.util.Objects;
 public class CentralData {
     private static CentralData instance;
 
-    ArrayList<ListItem> dataStorage;
+    private ArrayList<ListItem> dataStorage;
     private long dateCreated;
     private long dateLastModified;
 
@@ -61,5 +61,13 @@ public class CentralData {
 
     public void setDateLastModified(long dateLastModified) {
         this.dateLastModified = dateLastModified;
+    }
+
+    public ArrayList<ListItem> getDataStorage() {
+        return dataStorage;
+    }
+
+    public void setDataStorage(ArrayList<ListItem> dataStorage) {
+        this.dataStorage = dataStorage;
     }
 }

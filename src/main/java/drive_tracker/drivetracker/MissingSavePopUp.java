@@ -22,6 +22,7 @@ public class MissingSavePopUp {
         Stage missingSavePopUp = new Stage();
         missingSavePopUp.initModality(Modality.APPLICATION_MODAL);
         missingSavePopUp.initOwner(primaryStage);
+        missingSavePopUp.setAlwaysOnTop(true);
 
         FXMLLoader fxmlLoader = new FXMLLoader(MissingSavePopUp.class.getResource("missing-save-popup.fxml"));
         try {

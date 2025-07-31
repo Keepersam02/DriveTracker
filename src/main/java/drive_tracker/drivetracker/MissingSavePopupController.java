@@ -20,6 +20,9 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 
 public class MissingSavePopupController {
 
@@ -72,7 +75,8 @@ public class MissingSavePopupController {
             messageText.setText("Please provide a file to continue.");
         }
 
-        System.out.println(CentralData.getInstance().getDateCreated());
+        System.out.println(CentralData.getInstance().toString());
+        stage.close();
     }
 
     @FXML
@@ -100,30 +104,43 @@ public class MissingSavePopupController {
     @FXML
     private void saveFileNameButtonClick(ActionEvent event) {
         String fileName = fileNameTextField.getText();
-        StringBuilder builder = new StringBuilder();
-
-        try {
-            builder.append(dirFile.getAbsolutePath());
-        } catch (NullPointerException n) {
-             ErrLogger.error("Null file passed when not allowed.", n);
-             //Handle going back
-        } catch (SecurityException s) {
-            ErrLogger.warn("Could not access specified directory | Security Issue");
-            //Handle going back
-        }
-
-        builder.append("/");
-        builder.append(fileName);
+        StringBuilder builder = new StringBuilder(fileName);
         builder.append(".json");
-        String saveFilePath = builder.toString();
 
         try {
-            FileWriter fileWriter = new FileWriter(saveFilePath);
-            Config.setSavePath(saveFilePath);
-            System.out.println(Config.getSavePath());
-        } catch (IOException i) {
-            ErrLogger.warn("Could not open new file");
-            //Handle going back with message
+            Path path = Path.of(dirFile.getAbsolutePath());
+            String outPath = String.valueOf(path.resolve(builder.toString()));
+
+            FileOutputStream fileOutputStream = new FileOutputStream(outPath);
+            CentralData centralData = CentralData.getInstance();
+            Gson gson = new Gson();
+            String centDataStr = gson.toJson(centralData, CentralData.class);
+            fileOutputStream.write(centDataStr.getBytes(StandardCharsets.UTF_8));
+
+            Config config = new Config(outPath, "0.0.1");
+            config.setSaveFilePath(outPath);
+            config.writeSaveFilePath(outPath);
+        } catch (SecurityException | InvalidPathException s) {
+            messageText.setText("Invalid file path.");
+            createNewPane.setDisable(true);
+            createNewPane.setMouseTransparent(true);
+            createNewPane.setOpacity(0.0);
+
+            menuPane.setDisable(false);
+            menuPane.setOpacity(1.0);
+            menuPane.setMouseTransparent(false);
+        } catch (IOException e) {
+            messageText.setText("Failed to write file.");
+            messageText.setText("Invalid file path.");
+            createNewPane.setDisable(true);
+            createNewPane.setMouseTransparent(true);
+            createNewPane.setOpacity(0.0);
+
+            menuPane.setDisable(false);
+            menuPane.setOpacity(1.0);
+            menuPane.setMouseTransparent(false);
         }
+        Stage stage = (Stage)menuPane.getScene().getWindow();
+        stage.close();
     }
 }

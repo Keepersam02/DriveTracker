@@ -58,6 +58,10 @@ public class Client implements ListItem {
         this.projects = projects;
     }
 
+    public String interfaceGetName() {
+        return this.getName();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

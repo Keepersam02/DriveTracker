@@ -8,10 +8,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import data_handling.Config;
-import data_organization.CentralData;
-import data_organization.Client;
-import data_organization.ListItem;
-import data_organization.Project;
+import data_organization.*;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -71,11 +68,24 @@ public class MainPage extends Application {
             primaryStage.show();
         } catch (IOException e) {
             System.out.println("IO exception " + e.getMessage());
+            e.printStackTrace();
         }
+    }
 
+    public void addNewClient(String name, ArrayList<Drive> driveList, ArrayList<Project> projectList) throws IllegalArgumentException {
+        long dateCreated = System.currentTimeMillis();
+        Client newClient = new Client(name, dateCreated, dateCreated, projectList, driveList);
+        CentralData data = CentralData.getInstance();
 
-
-
+        for (ListItem item : data.getDataStorage()) {
+            if (item.getClass() == Client.class) {
+                if (item.interfaceGetName().equals(newClient.getName())) {
+                    throw new IllegalArgumentException("Client of the same name already exists.");
+                }
+            }
+        }
+        data.getDataStorage().add(newClient);
+        CentralData.setInstance(data);
     }
 
 

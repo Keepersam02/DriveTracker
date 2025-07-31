@@ -17,6 +17,7 @@ public class CentralData {
     private static CentralData instance;
 
     private ArrayList<ListItem> dataStorage;
+    private ArrayList<Drive> driveList;
     private long dateCreated;
     private long dateLastModified;
 
@@ -41,6 +42,14 @@ public class CentralData {
         this.dataStorage = dataStorage;
         this.dateCreated = dateCreated;
         this.dateLastModified = dateLastModified;
+    }
+
+    public ArrayList<Drive> getDriveList() {
+        return driveList;
+    }
+
+    public void setDriveList(ArrayList<Drive> driveList) {
+        this.driveList = driveList;
     }
 
     public CentralData(ArrayList<ListItem> dataStorage) {

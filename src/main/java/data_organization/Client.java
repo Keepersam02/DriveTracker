@@ -9,6 +9,7 @@ public class Client implements ListItem {
     private long dateCreated;
     private long dateLastModified;
     private ArrayList<Project> projects;
+    private ArrayList<Drive> driveList;
 
     public Client() {
     }
@@ -19,11 +20,20 @@ public class Client implements ListItem {
         this.dateLastModified = dateLastModified;
     }
 
-    public Client(String name, long dateCreated, long dateLastModified, ArrayList<Project> projects) {
+    public Client(String name, long dateCreated, long dateLastModified, ArrayList<Project> projects, ArrayList<Drive> driveList) {
         this.name = name;
         this.dateCreated = dateCreated;
         this.dateLastModified = dateLastModified;
         this.projects = projects;
+        this.driveList = driveList;
+    }
+
+    public ArrayList<Drive> getDriveList() {
+        return driveList;
+    }
+
+    public void setDriveList(ArrayList<Drive> driveList) {
+        this.driveList = driveList;
     }
 
     public String getName() {

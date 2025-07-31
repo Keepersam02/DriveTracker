@@ -114,10 +114,10 @@
                                                       <Font name="Microsoft Sans Serif" size="36.0" />
                                                    </font>
                                                 </Text>
-                                                <MenuButton mnemonicParsing="false" prefWidth="200.0" text="Select">
+                                                <MenuButton fx:id="actionMenuCreateNewMenuButton" mnemonicParsing="false" prefWidth="200.0" text="Select">
                                                   <items>
-                                                    <MenuItem mnemonicParsing="false" text="Client" />
-                                                    <MenuItem mnemonicParsing="false" text="Project" />
+                                                    <MenuItem fx:id="actionMenuCreateNewMenuItemClient" mnemonicParsing="false" text="Client" />
+                                                    <MenuItem fx:id="actionMenuCreateNewMenuItemProject" mnemonicParsing="false" text="Project" />
                                                   </items>
                                                    <font>
                                                       <Font name="Microsoft Sans Serif" size="14.0" />
@@ -131,7 +131,7 @@
                                                       <Insets top="15.0" />
                                                    </VBox.margin>
                                                 </Text>
-                                                <TextField maxWidth="300.0" promptText="Enter" />
+                                                <TextField fx:id="actionMenuCreateNewNameField" maxWidth="300.0" promptText="Enter" />
                                                 <HBox prefHeight="720.0" prefWidth="200.0">
                                                    <children>
                                                       <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="495.0">
@@ -141,7 +141,7 @@
                                                                   <Font name="Microsoft Sans Serif" size="24.0" />
                                                                </font>
                                                             </Text>
-                                                            <ListView prefHeight="500.0" prefWidth="200.0" />
+                                                            <ListView fx:id="actionMenuCreateNewDriveList" prefHeight="500.0" prefWidth="200.0" />
                                                          </children>
                                                          <padding>
                                                             <Insets right="10.0" />
@@ -154,7 +154,7 @@
                                                                   <Font size="24.0" />
                                                                </font>
                                                             </Text>
-                                                            <ListView disable="true" prefHeight="500.0" prefWidth="200.0" />
+                                                            <ListView fx:id="actionMenuCreateNewProjectList" disable="true" prefHeight="500.0" prefWidth="200.0" />
                                                          </children>
                                                          <padding>
                                                             <Insets left="10.0" />
@@ -172,7 +172,7 @@
                                           </VBox>
                                        </children>
                                     </StackPane>
-                                    <Button mnemonicParsing="false" text="Confirm" />
+                                    <Button fx:id="confirmNewListItemButton" mnemonicParsing="false" text="Confirm" />
                                  </children>
                                  <opaqueInsets>
                                     <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />

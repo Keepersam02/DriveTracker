@@ -72,11 +72,8 @@ public class MainPage extends Application {
         }
     }
 
-    public void addNewClient(String name, ArrayList<Drive> driveList, ArrayList<Project> projectList) throws IllegalArgumentException {
-        long dateCreated = System.currentTimeMillis();
-        Client newClient = new Client(name, dateCreated, dateCreated, projectList, driveList);
+    public void addNewClient(Client newClient) throws IllegalArgumentException {
         CentralData data = CentralData.getInstance();
-
         for (ListItem item : data.getDataStorage()) {
             if (item.getClass() == Client.class) {
                 if (item.interfaceGetName().equals(newClient.getName())) {
@@ -86,6 +83,17 @@ public class MainPage extends Application {
         }
         data.getDataStorage().add(newClient);
         CentralData.setInstance(data);
+    }
+
+    public void addNewProject(Project newProject) throws IllegalArgumentException {
+        CentralData data = CentralData.getInstance();
+        for (ListItem item : data.getDataStorage()) {
+            if (item.getClass() == Project.class) {
+                if (item.interfaceGetName().equals(newProject.getName())) {
+                    throw new IllegalArgumentException("Project with the same name already exists");
+                }
+            }
+        }
     }
 
 

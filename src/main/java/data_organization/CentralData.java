@@ -25,6 +25,7 @@ public class CentralData {
         this.dateCreated = 0;
         this.dateLastModified = 0;
         this.dataStorage = new ArrayList<>();
+        this.driveList = new ArrayList<>();
     }
 
     public static CentralData getInstance() {

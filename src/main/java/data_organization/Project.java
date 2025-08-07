@@ -8,12 +8,12 @@ public class Project implements ListItem {
     private String name;
     private long dateCreated;
     private long lastModified;
-    private ArrayList<FileTree> drives;
+    private ArrayList<Drive> drives;
 
     public Project() {
     }
 
-    public Project(String name, long dateCreated, long lastModified, ArrayList<FileTree> drives) {
+    public Project(String name, long dateCreated, long lastModified, ArrayList<Drive> drives) {
         this.name = name;
         this.dateCreated = dateCreated;
         this.lastModified = lastModified;
@@ -50,11 +50,11 @@ public class Project implements ListItem {
         this.lastModified = lastModified;
     }
 
-    public ArrayList<FileTree> getDrives() {
+    public ArrayList<Drive> getDrives() {
         return drives;
     }
 
-    public void setDrives(ArrayList<FileTree> drives) {
+    public void setDrives(ArrayList<Drive> drives) {
         this.drives = drives;
     }
 

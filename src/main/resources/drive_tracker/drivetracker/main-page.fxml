@@ -98,85 +98,103 @@
                               <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                            </HBox.margin>
                            <children>
-                              <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                              <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0">
                                  <children>
                                     <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Action Panel">
                                        <font>
                                           <Font name="Microsoft Sans Serif" size="42.0" />
                                        </font>
                                     </Text>
-                                    <StackPane fx:id="actionMenuCreateNewPane" prefHeight="570.0" prefWidth="200.0">
+                                    <StackPane fx:id="createNewListItemStackPane" prefHeight="1080.0" prefWidth="200.0">
                                        <children>
-                                          <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+                                          <VBox fx:id="createNewClientProjectVbox" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                              <children>
-                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Type">
-                                                   <font>
-                                                      <Font name="Microsoft Sans Serif" size="36.0" />
-                                                   </font>
-                                                </Text>
-                                                <MenuButton fx:id="actionMenuCreateNewMenuButton" mnemonicParsing="false" prefWidth="200.0" text="Select">
-                                                  <items>
-                                                    <MenuItem fx:id="actionMenuCreateNewMenuItemClient" mnemonicParsing="false" text="Client" />
-                                                    <MenuItem fx:id="actionMenuCreateNewMenuItemProject" mnemonicParsing="false" text="Project" />
-                                                  </items>
-                                                   <font>
-                                                      <Font name="Microsoft Sans Serif" size="14.0" />
-                                                   </font>
-                                                </MenuButton>
-                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Name">
-                                                   <font>
-                                                      <Font size="36.0" />
-                                                   </font>
-                                                   <VBox.margin>
-                                                      <Insets top="15.0" />
-                                                   </VBox.margin>
-                                                </Text>
-                                                <TextField fx:id="actionMenuCreateNewNameField" maxWidth="300.0" promptText="Enter" />
-                                                <HBox prefHeight="720.0" prefWidth="200.0">
+                                                <StackPane fx:id="actionMenuCreateNewPane" prefHeight="570.0" prefWidth="200.0">
                                                    <children>
-                                                      <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="495.0">
+                                                      <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                                          <children>
-                                                            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Contains Drives">
+                                                            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Type">
                                                                <font>
-                                                                  <Font name="Microsoft Sans Serif" size="24.0" />
+                                                                  <Font name="Microsoft Sans Serif" size="36.0" />
                                                                </font>
                                                             </Text>
-                                                            <ListView fx:id="actionMenuCreateNewDriveList" prefHeight="500.0" prefWidth="200.0" />
-                                                         </children>
-                                                         <padding>
-                                                            <Insets right="10.0" />
-                                                         </padding>
-                                                      </VBox>
-                                                      <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="495.0">
-                                                         <children>
-                                                            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Contains Projects">
+                                                            <MenuButton fx:id="actionMenuCreateNewMenuButton" mnemonicParsing="false" prefWidth="200.0" text="Select">
+                                                              <items>
+                                                                <MenuItem fx:id="actionMenuCreateNewMenuItemClient" mnemonicParsing="false" onAction="#setActionMenuCreateNewMenuItemClientClick" text="Client" />
+                                                                <MenuItem fx:id="actionMenuCreateNewMenuItemProject" mnemonicParsing="false" onAction="#onActionMenuCreateNewMenuItemProjectClick" text="Project" />
+                                                              </items>
                                                                <font>
-                                                                  <Font size="24.0" />
+                                                                  <Font name="Microsoft Sans Serif" size="14.0" />
                                                                </font>
+                                                            </MenuButton>
+                                                            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Name">
+                                                               <font>
+                                                                  <Font size="36.0" />
+                                                               </font>
+                                                               <VBox.margin>
+                                                                  <Insets top="15.0" />
+                                                               </VBox.margin>
                                                             </Text>
-                                                            <ListView fx:id="actionMenuCreateNewProjectList" disable="true" prefHeight="500.0" prefWidth="200.0" />
+                                                            <TextField fx:id="actionMenuCreateNewNameField" maxWidth="300.0" promptText="Enter" />
+                                                            <HBox prefHeight="720.0" prefWidth="200.0">
+                                                               <children>
+                                                                  <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="495.0">
+                                                                     <children>
+                                                                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Contains Drives">
+                                                                           <font>
+                                                                              <Font name="Microsoft Sans Serif" size="24.0" />
+                                                                           </font>
+                                                                        </Text>
+                                                                        <ListView fx:id="actionMenuCreateNewDriveList" prefHeight="500.0" prefWidth="200.0" />
+                                                                     </children>
+                                                                     <padding>
+                                                                        <Insets right="10.0" />
+                                                                     </padding>
+                                                                  </VBox>
+                                                                  <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="495.0">
+                                                                     <children>
+                                                                        <Text fx:id="actionMenuCreateNewProjectListText" strokeType="OUTSIDE" strokeWidth="0.0" text="Contains Projects">
+                                                                           <font>
+                                                                              <Font size="24.0" />
+                                                                           </font>
+                                                                        </Text>
+                                                                        <ListView fx:id="actionMenuCreateNewProjectList" disable="true" prefHeight="500.0" prefWidth="200.0" />
+                                                                     </children>
+                                                                     <padding>
+                                                                        <Insets left="10.0" />
+                                                                     </padding>
+                                                                  </VBox>
+                                                               </children>
+                                                               <VBox.margin>
+                                                                  <Insets top="10.0" />
+                                                               </VBox.margin>
+                                                            </HBox>
                                                          </children>
                                                          <padding>
-                                                            <Insets left="10.0" />
+                                                            <Insets top="10.0" />
                                                          </padding>
                                                       </VBox>
                                                    </children>
-                                                   <VBox.margin>
-                                                      <Insets top="10.0" />
-                                                   </VBox.margin>
+                                                </StackPane>
+                                                <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                                                   <children>
+                                                      <Button fx:id="confirmNewListItemButton" mnemonicParsing="false" onAction="#confirmNewListItemButtonClick" text="Confirm" />
+                                                      <Button fx:id="cancelNewListItemButton" mnemonicParsing="false" onAction="#cancelNewListItemButtonClick" text="Cancel" />
+                                                   </children>
                                                 </HBox>
+                                                <Text fx:id="actionMenuCreateNewMessageText" strokeType="OUTSIDE" strokeWidth="0.0">
+                                                   <font>
+                                                      <Font name="Microsoft Sans Serif" size="13.0" />
+                                                   </font>
+                                                </Text>
                                              </children>
-                                             <padding>
-                                                <Insets top="10.0" />
-                                             </padding>
+                                             <opaqueInsets>
+                                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                             </opaqueInsets>
                                           </VBox>
                                        </children>
                                     </StackPane>
-                                    <Button fx:id="confirmNewListItemButton" mnemonicParsing="false" text="Confirm" />
                                  </children>
-                                 <opaqueInsets>
-                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-                                 </opaqueInsets>
                               </VBox>
                            </children>
                            <padding>

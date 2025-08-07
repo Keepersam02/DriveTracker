@@ -5,6 +5,7 @@ module drive_tracker.drivetracker {
     requires com.google.gson;
     requires java.desktop;
     requires java.logging;
+    requires java.sql;
 
 
     opens drive_tracker.drivetracker to javafx.fxml;

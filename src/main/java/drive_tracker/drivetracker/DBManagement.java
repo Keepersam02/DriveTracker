@@ -1,5 +1,6 @@
 package drive_tracker.drivetracker;
 
+import data_organization.Client;
 import data_organization.Drive;
 
 import java.sql.DriverManager;
@@ -7,11 +8,79 @@ import java.sql.SQLException;
 
 public class DBManagement {
     public static void main(String []args) {
-        createNewDB();
-        createNewTable();
-        insertNewElement();
-        insert2();
+        setupDB();
     }
+
+    public static void setupDB() {
+        String url = "jdbc:sqlite:core.db";
+
+        var coreSql = "CREATE TABLE IF NOT EXISTS listItems ("
+                + "listItemID INTEGER PRIMARY KEY,"
+                + "name TEXT UNIQUE NOT NULL,"
+                + "description TEXT,"
+                + "dateCreated REAL,"
+                + "dateLastModified REAL NOT NULL);";
+
+        var drMapSql = "CREATE TABLE IF NOT EXISTS driveMap ("
+                + "PRIMARY KEY(listItemID, driveID),"
+                + "clientID INTEGER  NOT NULL,"
+                + "driveID INTEGER  NOT NULL,"
+                + "dateAssociated INTEGER,"
+                + "FOREIGN KEY(listItemID) REFERENCES listItems(listItemID) ON DELETE CASCADE,"
+                + "FOREIGN KEY(driveID) REFERENCES drives(driveID) ON DELETE CASCADE);";
+
+        var drSql = "CREATE TABLE IF NOT EXISTS drives ("
+                + "driveID INTEGER PRIMARY KEY,"
+                + "driveName TEXT UNIQUE NOT NULL,"
+                + "description TEXT,"
+                + "dateCreated INTEGER,"
+                + "dateLastModified INTEGER);";
+
+        var scanTableSql = "CREATE TABLE IF NOT EXISTS scans ("
+                + "scanID INTEGER PRIMARY KEY,"
+                + "dateScan INTEGER,"
+                + "driveID INTEGER NOT NULL,"
+                + "FOREIGN KEY(driveID) REFERENCES drives(driveIF) ON DELETE RESTRICT);";
+
+        var fileTableSql = "CREATE TABLE IF NOT EXISTS files ("
+                + "fileID INTEGER PRIMARY KEY"
+                + "scanID INTEGER NOT NULL"
+                + "parentID INTEGER"
+                + "FOREIGN KEY(scanID) REFERENCES scans(scanID),"
+                + "FOREIGN KEY(parentID) REFERENCES files(fileID));";
+
+        try (var conn = DriverManager.getConnection(url); var stmt = conn.createStatement()) {
+            stmt.execute(coreSql);
+            System.out.println("1");
+            stmt.execute(drMapSql);
+            System.out.println("2");
+            stmt.execute(drSql);
+            System.out.println("3");
+            stmt.execute(scanTableSql);
+            System.out.println("4");
+            stmt.execute(fileTableSql);
+            System.out.println("5");
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void insertClient(Client client) {
+        var url = "jdbc:sqlite:core.db";
+        String insStatement = "INSERT INTO listItems(name, description, dateCreated, dateLastModified) VALUES(?,?,?,?)";
+
+        try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(insStatement)) {
+            stmt.setString(2, client.getName());
+            stmt.setString(3, null);
+            stmt.setInt(4, (int) client.getDateCreated());
+            stmt.setInt(5, (int) client.getDateLastModified());
+            stmt.execute();
+        } catch (SQLException s) {
+            System.out.println(s.getMessage());
+        }
+    }
+
+
     public static void createNewDB() {
         String url = "jdbc:sqlite:my.db";
 

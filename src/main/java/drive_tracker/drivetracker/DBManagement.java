@@ -2,9 +2,12 @@ package drive_tracker.drivetracker;
 
 import data_organization.Client;
 import data_organization.Drive;
+import javafx.collections.ObservableList;
 
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class DBManagement {
     public static void main(String []args) {
@@ -16,17 +19,18 @@ public class DBManagement {
 
         var coreSql = "CREATE TABLE IF NOT EXISTS listItems ("
                 + "listItemID INTEGER PRIMARY KEY,"
+                + "isClient INTEGER NOT NULL,"
+                + "clientID INTEGER,"
                 + "name TEXT UNIQUE NOT NULL,"
                 + "description TEXT,"
-                + "dateCreated REAL,"
-                + "dateLastModified REAL NOT NULL);";
+                + "dateCreated INTEGER,"
+                + "dateLastModified INTEGER NOT NULL);";
 
         var drMapSql = "CREATE TABLE IF NOT EXISTS driveMap ("
-                + "PRIMARY KEY(listItemID, driveID),"
                 + "clientID INTEGER  NOT NULL,"
                 + "driveID INTEGER  NOT NULL,"
                 + "dateAssociated INTEGER,"
-                + "FOREIGN KEY(listItemID) REFERENCES listItems(listItemID) ON DELETE CASCADE,"
+                + "FOREIGN KEY(clientID) REFERENCES listItems(listItemID) ON DELETE CASCADE,"
                 + "FOREIGN KEY(driveID) REFERENCES drives(driveID) ON DELETE CASCADE);";
 
         var drSql = "CREATE TABLE IF NOT EXISTS drives ("
@@ -43,9 +47,9 @@ public class DBManagement {
                 + "FOREIGN KEY(driveID) REFERENCES drives(driveIF) ON DELETE RESTRICT);";
 
         var fileTableSql = "CREATE TABLE IF NOT EXISTS files ("
-                + "fileID INTEGER PRIMARY KEY"
-                + "scanID INTEGER NOT NULL"
-                + "parentID INTEGER"
+                + "fileID INTEGER PRIMARY KEY,"
+                + "scanID INTEGER NOT NULL,"
+                + "parentID INTEGER,"
                 + "FOREIGN KEY(scanID) REFERENCES scans(scanID),"
                 + "FOREIGN KEY(parentID) REFERENCES files(fileID));";
 
@@ -65,89 +69,93 @@ public class DBManagement {
         }
     }
 
-    public static void insertClient(Client client) {
+    public static void insertListItem(String name, String description, int isClient, String parentName) throws SQLException {
         var url = "jdbc:sqlite:core.db";
-        String insStatement = "INSERT INTO listItems(name, description, dateCreated, dateLastModified) VALUES(?,?,?,?)";
+        int clientID;
+        long currentTime = System.currentTimeMillis();
 
-        try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(insStatement)) {
-            stmt.setString(2, client.getName());
-            stmt.setString(3, null);
-            stmt.setInt(4, (int) client.getDateCreated());
-            stmt.setInt(5, (int) client.getDateLastModified());
-            stmt.execute();
-        } catch (SQLException s) {
-            System.out.println(s.getMessage());
+        if (isClient == 0) {
+            String qryStmt = "SELECT listItemID FROM listItems WHERE name = ?";
+            try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(qryStmt)) {
+                stmt.setString(1, parentName);
+                var rs = stmt.executeQuery();
+                clientID = rs.getInt(1);
+            } catch (SQLException s) {
+                throw new SQLException(s);
+            }
+
+            String insStatement = "INSERT INTO listItems(isClient, clientID, name, description, dateCreated, dateLastModified) VALUES(?,?,?,?,?,?)";
+            try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(insStatement)) {
+                stmt.setInt(1, isClient);
+                stmt.setInt(2, clientID);
+                stmt.setString(3, name);
+                stmt.setString(4, description);
+                stmt.setLong(5, currentTime);
+                stmt.setLong(6, currentTime);
+                stmt.execute();
+            }
+        } else if (isClient == 1) {
+            String insStmt = "INSERT INTO listItems(isClient, name, description, dateCreated, dateLastModified) VALUES(?,?,?,?,?)";
+            try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(insStmt)) {
+                stmt.setInt(1, 1);
+                stmt.setString(2, name);
+                stmt.setString(3, description);
+                stmt.setLong(4, currentTime);
+                stmt.setLong(5, currentTime);
+                stmt.execute();
+            } catch (SQLException s) {
+                throw new RuntimeException(s);
+            }
+        } else {
+            throw new IllegalArgumentException("Invalid case for isClient");
         }
     }
 
+    public static void updateClientIDs(String clientName, ObservableList<String> projectNames) {
+        String url = "jdbc:sqlite:core.db";
+        String clientIDQry = "SELECT listItemID FROM listItems WHERE name = ?";
+        String updateStmt = "UPDATE listItems SET clientID = ? WHERE name = ?";
+        int clientID;
+        try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(clientIDQry); var upStmt = conn.prepareStatement(updateStmt)) {
+            stmt.setString(1, clientName);
+            var rs = stmt.executeQuery();
+            clientID = rs.getInt(1);
 
-    public static void createNewDB() {
-        String url = "jdbc:sqlite:my.db";
-
-        try (var conn = DriverManager.getConnection(url)) {
-            if (conn != null) {
-                var meta = conn.getMetaData();
-                    System.out.println(meta.getDriverName());
+            for (String projName : projectNames) {
+                upStmt.setInt(1, clientID);
+                upStmt.setString(2, projName);
+                upStmt.executeUpdate();
             }
         } catch (SQLException s) {
-            System.out.println(s.getMessage());
+
         }
+
     }
 
-    public static void createNewTable() {
-        var url = "jdbc:sqlite:my.db";
-
-        var sql = "CREATE TABLE IF NOT EXISTS drives ("
-                 + "    driveName TEXT PRIMARY KEY,"
-                 + "    description TEXT NOT NULL,"
-                 + "    capacity REAL"
-                 + ");";
-
+    public static void updateClientDriveMap(String listItemName, ObservableList<String> driveNames) {
+        String url = "jdbc:sqlite:core.db";
+        String qryStmt = "SELECT driveID FROM drives WHERE driveName = ?";
+        String getClientStmt = "SELECT listItemID FROM listItems WHERE name = ?";
+        String insStmt = "INSERT INTO driveMap(clientID, driveID, dateAssociated) VALUES(?,?,?)";
         try (var conn = DriverManager.getConnection(url);
-            var stmt = conn.createStatement()) {
-            stmt.execute(sql);
+             var stmtQry = conn.prepareStatement(qryStmt); var stmtIns = conn.prepareStatement(insStmt);
+             var stmtGetClID = conn.prepareStatement(getClientStmt)) {
 
+            stmtGetClID.setString(1, listItemName);
+            var resSet = stmtGetClID.executeQuery();
+            int clientID = resSet.getInt(1);
+            for (String name : driveNames) {
+                stmtQry.setString(1, name);
+                var rs = stmtQry.executeQuery();
+                int driveID = rs.getInt(1);
+
+                stmtIns.setInt(1, clientID);
+                stmtIns.setInt(2, driveID);
+                stmtIns.setInt(3, Math.toIntExact(System.currentTimeMillis()));
+                stmtIns.execute();
+            }
         } catch (SQLException s) {
             System.out.println(s.getMessage());
-        }
-    }
-
-    public static void insertNewElement() {
-        String url = "jdbc:sqlite:my.db";
-
-        var names = new String[] {"PB Drive 1", "PB Drive 2"};
-        var description = new String[] {"PB drive", "pb drive 2"};
-        var capacities = new int[] {5000000, 5000000};
-
-        String sqlIns = "INSERT INTO drives(description, capacity) VALUES(?,?)";
-
-        try (var conn = DriverManager.getConnection(url); var pstmt = conn.prepareStatement(sqlIns)) {
-            for  (int i = 0;i < names.length; i++) {
-                pstmt.setString(1, description[i]);
-                pstmt.setInt(2, capacities[i]);
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-            System.out.println(e.getErrorCode());
-        }
-    }
-    public static void insert2() {
-        String url = "jdbc:sqlite:my.db";
-
-        var name = "BVK 1";
-        var description = "2012-14";
-        int capacity = 10000000;
-
-        String sqlIns = "INSERT INTO drives(driveName, description, capacity) VALUES(?,?,?)";
-
-
-        try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(sqlIns)) {
-            stmt.setString(1, name);
-            stmt.setString(2, description);
-            stmt.setInt(3, capacity);
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
         }
     }
 }

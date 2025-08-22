@@ -7,6 +7,7 @@
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
@@ -78,9 +79,10 @@
                                        </font>
                                     </Text>
                                     <ListView prefHeight="720.0" prefWidth="200.0" />
-                                    <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0">
+                                    <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="15.0">
                                        <children>
-                                          <Button mnemonicParsing="false" text="View Drive" />
+                                          <Button fx:id="driveCreateNewButton" mnemonicParsing="false" onAction="#onDriveCreateNewButton" text="Create New" />
+                                          <Button fx:id="driveCreateNewButton" mnemonicParsing="false" text="View Drive" />
                                        </children>
                                     </HBox>
                                  </children>
@@ -194,6 +196,63 @@
                                           </VBox>
                                        </children>
                                     </StackPane>
+                                 </children>
+                              </VBox>
+                              <VBox fx:id="actionMenuCreateNewDriveVBox" alignment="TOP_CENTER" disable="true" prefHeight="200.0" prefWidth="100.0" spacing="20.0">
+                                 <children>
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Action Panel">
+                                       <font>
+                                          <Font name="Microsoft Sans Serif" size="42.0" />
+                                       </font>
+                                    </Text>
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Drive Name">
+                                       <font>
+                                          <Font name="Microsoft Sans Serif" size="36.0" />
+                                       </font>
+                                    </Text>
+                                    <TextField fx:id="actionMenuCreateNewDriveNameTextArea" maxWidth="300.0" promptText="Enter Name" />
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Description">
+                                       <font>
+                                          <Font size="36.0" />
+                                       </font>
+                                    </Text>
+                                    <TextArea fx:id="actionMenuCreateNewDriveDescriptionTextField" maxHeight="100.0" maxWidth="700.0" prefHeight="200.0" prefWidth="200.0" />
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Drive Belongs To">
+                                       <font>
+                                          <Font size="20.0" />
+                                       </font>
+                                    </Text>
+                                    <HBox prefHeight="250.0" prefWidth="200.0" spacing="10.0">
+                                       <children>
+                                          <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="495.0" spacing="10.0">
+                                             <children>
+                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Clients">
+                                                   <font>
+                                                      <Font size="20.0" />
+                                                   </font>
+                                                </Text>
+                                                <ListView fx:id="actionMenuCreateNewDriveClientsListView" prefHeight="200.0" prefWidth="200.0" />
+                                             </children>
+                                          </VBox>
+                                          <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="495.0" spacing="10.0">
+                                             <children>
+                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Projects">
+                                                   <font>
+                                                      <Font name="Microsoft Sans Serif" size="20.0" />
+                                                   </font>
+                                                </Text>
+                                                <ListView fx:id="actionMenuCreateNewDriveProjectsListView" prefHeight="200.0" prefWidth="200.0" />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="20.0">
+                                       <children>
+                                          <Button mnemonicParsing="false" text="Confirm and Scan" />
+                                          <Button mnemonicParsing="false" text="Confirm" />
+                                          <Button fx:id="actionMenuCreateNewDriveCancel" mnemonicParsing="false" onAction="#onAMCreateDriveCancelClick" text="Cancel" />
+                                       </children>
+                                    </HBox>
                                  </children>
                               </VBox>
                            </children>

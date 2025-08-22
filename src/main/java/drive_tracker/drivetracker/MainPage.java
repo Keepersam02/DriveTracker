@@ -36,6 +36,7 @@ public class MainPage extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        DBManagement.setupDB();
         Config fileConfig = new Config();
         String saveFilePath = fileConfig.loadSaveFilePath();
         Application.setUserAgentStylesheet(new NordDark().getUserAgentStylesheet());

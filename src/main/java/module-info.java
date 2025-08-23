@@ -6,6 +6,7 @@ module drive_tracker.drivetracker {
     requires java.desktop;
     requires java.logging;
     requires java.sql;
+    requires org.xerial.sqlitejdbc;
 
 
     opens drive_tracker.drivetracker to javafx.fxml;

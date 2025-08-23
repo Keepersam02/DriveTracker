@@ -27,6 +27,7 @@ public class DBManagement {
                 + "dateLastModified INTEGER NOT NULL);";
 
         var drMapSql = "CREATE TABLE IF NOT EXISTS driveMap ("
+                + "mapID INTEGER PRIMARY KEY,"
                 + "clientID INTEGER  NOT NULL,"
                 + "driveID INTEGER  NOT NULL,"
                 + "dateAssociated INTEGER,"
@@ -132,7 +133,7 @@ public class DBManagement {
 
     }
 
-    public static void updateClientDriveMap(String listItemName, ObservableList<String> driveNames) {
+    public static void updateClientDriveMap(String listItemName, ObservableList<String> driveNames) throws SQLException {
         String url = "jdbc:sqlite:core.db";
         String qryStmt = "SELECT driveID FROM drives WHERE driveName = ?";
         String getClientStmt = "SELECT listItemID FROM listItems WHERE name = ?";
@@ -151,11 +152,54 @@ public class DBManagement {
 
                 stmtIns.setInt(1, clientID);
                 stmtIns.setInt(2, driveID);
-                stmtIns.setInt(3, Math.toIntExact(System.currentTimeMillis()));
+                stmtIns.setLong(3, System.currentTimeMillis());
                 stmtIns.execute();
             }
         } catch (SQLException s) {
-            System.out.println(s.getMessage());
+            throw new SQLException(s);
+        }
+    }
+
+    public static void insertNewDrive(String driveName, String description) throws SQLException{
+        String url = "jdbc:sqlite:core.db";
+        String insStr = "INSERT INTO drives(driveName, description, dateCreated, dateLastModified) VALUES(?,?,?,?)";
+
+        try (var conn = DriverManager.getConnection(url); var insStmt = conn.prepareStatement(insStr)) {
+            insStmt.setString(1, driveName);
+            insStmt.setString(2, description);
+            insStmt.setLong(3, System.currentTimeMillis());
+            insStmt.setLong(4, System.currentTimeMillis());
+            insStmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new SQLException(e);
+        }
+    }
+
+    public static void updateDriveClientMap(String driveName, ObservableList<String> listItemNames) throws SQLException {
+        String url = "jdbc:sqlite:core.db";
+        String qryStmt = "SELECT driveID FROM drives WHERE driveName = ?";
+        String qryListItemStmt = "Select listItemID FROM listItems WHERE name = ?";
+
+        String insStr = "INSERT INTO driveMap(driveID, listItemID, dateAssociated) VALUES(?,?,?)";
+
+        try (var conn = DriverManager.getConnection(url); var driveQry = conn.prepareStatement(qryStmt);
+             var listItemQry = conn.prepareStatement(qryListItemStmt); var insStmt = conn.prepareStatement(insStr)) {
+            driveQry.setString(1, driveName);
+            var driveIDRS = driveQry.executeQuery();
+            int driveID = driveIDRS.getInt(1);
+
+            ArrayList<Integer> listItemsIDs = new ArrayList<>();
+            for (String listItemName : listItemNames) {
+                listItemQry.setString(1, listItemName);
+                var listItemRS = listItemQry.executeQuery();
+
+                insStmt.setInt(1, driveID);
+                insStmt.setInt(2, listItemRS.getInt(1));
+                insStmt.setLong(3, System.currentTimeMillis());
+                insStmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new SQLException(e);
         }
     }
 }

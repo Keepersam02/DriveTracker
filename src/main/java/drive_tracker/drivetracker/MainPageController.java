@@ -9,8 +9,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import org.sqlite.SQLiteErrorCode;
 
 import javax.swing.*;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -35,20 +37,21 @@ public class MainPageController {
 
         updateHomePane();
 
-        String url = "jdbc:sqlite:core.db";
+        /*String url = "jdbc:sqlite:core.db";
         var listItemQueryStmt = "SELECT name FROM listItems;";
         var driveQrStmt = "SELECT driveName FROM drives;";
 
         try (var conn = DriverManager.getConnection(url); var stmt = conn.createStatement(); var rs = stmt.executeQuery(listItemQueryStmt); var ns = stmt.executeQuery(driveQrStmt)) {
             while (rs.next()) {
-                itemListView.getItems().add(rs.getString("name"));
+                itemListView.getItems().add(rs.getString(1));
             }
             while (ns.next()) {
-                driveListView.getItems().add("name");
+                driveListView.getItems().add(ns.getString("driveName"));
             }
         } catch (SQLException e) {
+            System.out.println("Init");
             System.out.println(e.getMessage());
-        }
+        }*/
 
     }
 
@@ -60,7 +63,7 @@ public class MainPageController {
         try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(qryListItemStmt);
              var rs = stmt.executeQuery(); var stmtDr = conn.prepareStatement(qryDriveStmt); var ds = stmtDr.executeQuery()) {
             itemListView.getItems().clear();
-            itemListView.getItems().clear();
+            driveListView.getItems().clear();
             while (rs.next()) {
                 itemListView.getItems().add(rs.getString(1));
             }
@@ -68,7 +71,8 @@ public class MainPageController {
                 driveListView.getItems().add(ds.getString(1));
             }
         } catch (SQLException s) {
-
+            System.out.println("update Home");
+            System.out.println(s.getMessage());
         }
     }
 
@@ -101,12 +105,17 @@ public class MainPageController {
         createNewListItemStackPane.setVisible(true);
         createNewListItemStackPane.setMouseTransparent(false);
 
-        CentralData data = CentralData.getInstance();
-        for (ListItem item : data.getDataStorage()) {
-            actionMenuCreateNewProjectList.getItems().add(item.interfaceGetName());
-        }
-        for (Drive drive : data.getDriveList()) {
-            actionMenuCreateNewDriveList.getItems().add(drive.getDriveName());
+        String url = "jdbc:sqlite:core.db";
+        String driveQryStr = "SELECT driveName FROM drives";
+
+        try (var conn = DriverManager.getConnection(url); var driveStmt = conn.prepareStatement(driveQryStr)) {
+            var driveRS = driveStmt.executeQuery();
+            actionMenuCreateNewDriveList.getItems().clear();
+            while (driveRS.next()) {
+                actionMenuCreateNewDriveList.getItems().add(driveRS.getString(1));
+            }
+        } catch (SQLException s) {
+
         }
 
         actionMenuCreateNewDriveList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -222,7 +231,7 @@ public class MainPageController {
                 return;
             }
         }
-
+        updateHomePane();
         actionMenuCreateNewNameField.setText("");
         actionMenuCreateNewMenuButton.setText("Select");
         createNewListItemStackPane.setVisible(false);
@@ -238,16 +247,19 @@ public class MainPageController {
 
 
     @FXML
-    private TextField actionMenuCreateNewDriveNameTextArea;
+    private TextField actionMenuCreateNewDriveNameTextField;
 
     @FXML
-    private TextArea actionMenuCreateNewDriveDescriptionTextField;
+    private TextArea actionMenuCreateNewDriveDescriptionTextArea;
 
     @FXML
     private ListView<String> actionMenuCreateNewDriveClientsListView, actionMenuCreateNewDriveProjectsListView;
 
     @FXML
     private Button actionMenuCreateNewDriveConfirmAndScan, actionMenuCreateNewDriveConfirm, actionMenuCreateNewDriveCancel;
+
+    @FXML
+    private Text actionMenuCreateDriveWarningText;
 
     @FXML
     private void switchToCreateNewDrive(ActionEvent event) {
@@ -296,14 +308,44 @@ public class MainPageController {
 
     @FXML
     private void onAMCreateDriveConfirmClick(ActionEvent event) {
+        String driveName = actionMenuCreateNewDriveNameTextField.getText();
+        if (driveName.isEmpty()) {
+            actionMenuCreateDriveWarningText.setText("Please enter a unique name for the drive");
+            return;
+        }
+        String description = actionMenuCreateNewDriveDescriptionTextArea.getText();
 
+        ObservableList<String> listItemNames = actionMenuCreateNewDriveClientsListView.getSelectionModel().getSelectedItems();
+        listItemNames.addAll(actionMenuCreateNewProjectList.getSelectionModel().getSelectedItems());
+
+        try {
+            DBManagement.insertNewDrive(driveName, description);
+            DBManagement.updateDriveClientMap(driveName, listItemNames);
+        } catch (SQLException s) {
+            if (s.getMessage().contains("UNIQUE constraint failed")) {
+                actionMenuCreateDriveWarningText.setText("Please enter a unique drive name.");
+                return;
+            }
+            actionMenuCreateDriveWarningText.setText("An error occurred in saving the new Drive.  Please try again.");
+            return;
+        }
+        actionMenuCreateNewDriveNameTextField.setText("");
+        actionMenuCreateNewDriveDescriptionTextArea.setText("");
+        actionMenuCreateDriveWarningText.setText("");
+        switchAwayFromNewDrive(event);
     }
 
     @FXML
     private void onAMCreateDriveCancelClick(ActionEvent event) {
-        actionMenuCreateNewDriveDescriptionTextField.setText("");
-        actionMenuCreateNewDriveNameTextArea.setText("");
+        actionMenuCreateNewDriveDescriptionTextArea.setText("");
+        actionMenuCreateNewDriveNameTextField.setText("");
 
         switchAwayFromNewDrive(event);
     }
+
+    @FXML
+    private TableView<String> viewDriveTableView;
+
+    @FXML
+    private TableColumn<String> viewDriveCurrentTableCollum, view;
 }

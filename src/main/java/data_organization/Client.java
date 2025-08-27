@@ -4,36 +4,52 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class Client implements ListItem {
-    private String name;
-    private long dateCreated;
-    private long dateLastModified;
+public class Client {
+    private int listItemID;
+    private String name, description;
+    private long dateCreated, dateLastModified;
     private ArrayList<Project> projects;
-    private ArrayList<Drive> driveList;
+    private ArrayList<Drive> drives;
+
+    public Client(int listItemID, String name, String description, long dateCreated, long dateLastModified, ArrayList<Project> projects, ArrayList<Drive> drives) {
+        this.listItemID = listItemID;
+        this.name = name;
+        this.description = description;
+        this.dateCreated = dateCreated;
+        this.dateLastModified = dateLastModified;
+        this.projects = projects;
+        this.drives = drives;
+    }
+
+    public Client(int listItemID, String name, String description, long dateCreated, long dateLastModified) {
+        this.listItemID = listItemID;
+        this.name = name;
+        this.description = description;
+        this.dateCreated = dateCreated;
+        this.dateLastModified = dateLastModified;
+    }
 
     public Client() {
     }
 
-    public Client(String name, long dateCreated, long dateLastModified) {
-        this.name = name;
-        this.dateCreated = dateCreated;
-        this.dateLastModified = dateLastModified;
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || getClass() != object.getClass()) return false;
+        Client client = (Client) object;
+        return listItemID == client.listItemID && dateCreated == client.dateCreated && dateLastModified == client.dateLastModified && Objects.equals(name, client.name) && Objects.equals(description, client.description) && Objects.equals(projects, client.projects) && Objects.equals(drives, client.drives);
     }
 
-    public Client(String name, long dateCreated, long dateLastModified, ArrayList<Project> projects, ArrayList<Drive> driveList) {
-        this.name = name;
-        this.dateCreated = dateCreated;
-        this.dateLastModified = dateLastModified;
-        this.projects = projects;
-        this.driveList = driveList;
+    @Override
+    public int hashCode() {
+        return Objects.hash(listItemID, name, description, dateCreated, dateLastModified, projects, drives);
     }
 
-    public ArrayList<Drive> getDriveList() {
-        return driveList;
+    public int getListItemID() {
+        return listItemID;
     }
 
-    public void setDriveList(ArrayList<Drive> driveList) {
-        this.driveList = driveList;
+    public void setListItemID(int listItemID) {
+        this.listItemID = listItemID;
     }
 
     public String getName() {
@@ -42,6 +58,14 @@ public class Client implements ListItem {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public long getDateCreated() {
@@ -68,19 +92,11 @@ public class Client implements ListItem {
         this.projects = projects;
     }
 
-    public String interfaceGetName() {
-        return this.getName();
+    public ArrayList<Drive> getDrives() {
+        return drives;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Client client = (Client) o;
-        return Objects.equals(name, client.name) && Objects.equals(dateCreated, client.dateCreated) && Objects.equals(dateLastModified, client.dateLastModified) && Objects.equals(projects, client.projects);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, dateCreated, dateLastModified, projects);
+    public void setDrives(ArrayList<Drive> drives) {
+        this.drives = drives;
     }
 }

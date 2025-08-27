@@ -2,12 +2,25 @@ package drive_tracker.drivetracker;
 
 import data_organization.Client;
 import data_organization.Drive;
+import data_organization.FileEntry;
 import javafx.collections.ObservableList;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DBManagement {
     public static void main(String []args) {
@@ -51,6 +64,13 @@ public class DBManagement {
                 + "fileID INTEGER PRIMARY KEY,"
                 + "scanID INTEGER NOT NULL,"
                 + "parentID INTEGER,"
+                + "name TEXT,"
+                + "path TEXT,"
+                + "isDir INTEGER,"
+                + "hash INTEGER,"
+                + "dateCreated INTEGER,"
+                + "dateLastModified INTEGER,"
+                + "size LONG,"
                 + "FOREIGN KEY(scanID) REFERENCES scans(scanID),"
                 + "FOREIGN KEY(parentID) REFERENCES files(fileID));";
 
@@ -202,4 +222,102 @@ public class DBManagement {
             throw new SQLException(e);
         }
     }
+
+    public static void scanDrive(String filePath, int scanID, PriorityBlockingQueue<FileEntry> fileQueue, AtomicBoolean finishedScanning, AtomicInteger numFilesFound) {
+        finishedScanning.compareAndSet(false, false);
+        numFilesFound.compareAndSet(0, 0);
+
+        try {
+            Files.walkFileTree(Path.of(filePath), new FileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    FileEntry newEntry = new FileEntry();
+                    newEntry.setName(file.getFileName().toString());
+                    newEntry.setPath(file.toString());
+                    newEntry.setDateCreated(attrs.creationTime().toMillis());
+                    newEntry.setLastModified(attrs.lastModifiedTime().toMillis());
+                    newEntry.setSize(attrs.size());
+                    if (attrs.isDirectory()) {
+                        newEntry.setIsDirectory(1);
+                    } else {
+                        newEntry.setIsDirectory(0);
+                    }
+
+                    String url = "jdbc:sqlite:core.db";
+                    String getParentIDStr = "SELECT fileID FROM files WHERE path = ?";
+                    String insStr = "INSERT INTO files(scanID, parentID, name, path, isDir, dateCreated, dateLastModified, size) VALUES(?,?,?,?,?,?,?,?)";
+                    try (var conn = DriverManager.getConnection(url);
+                         var insStmt = conn.prepareStatement(insStr); var getParentIDStmt = conn.prepareStatement(getParentIDStr)){
+                        getParentIDStmt.setString(1, newEntry.getPath());
+                        var rs = getParentIDStmt.executeQuery();
+                        int parentID = rs.getInt(1);
+                        newEntry.setParentID(parentID);
+
+                        insStmt.setInt(2, scanID);
+                        insStmt.setInt(3, parentID);
+                        insStmt.setString(4, newEntry.getName());
+                        insStmt.setString(5, newEntry.getPath());
+                        insStmt.setInt(6, newEntry.getIsDirectory());
+                        insStmt.setLong(7, newEntry.getDateCreated());
+                        insStmt.setLong(8, newEntry.getLastModified());
+                        insStmt.setLong(9, newEntry.getSize());
+                        insStmt.execute();
+                    } catch (SQLException s) {
+
+                    }
+
+                    fileQueue.offer(newEntry);
+
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    System.out.println("Failed to visit file: " + file.toString());
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+
+        }
+    }
+
+    public static void fileHashManager(PriorityBlockingQueue<FileEntry> fileQueue, AtomicBoolean finishedScanning, AtomicInteger numFilesFound, AtomicBoolean finishedHashing) {
+        AtomicInteger numberActiveThreads = new AtomicInteger(0);
+        AtomicInteger filesHashed = new AtomicInteger(0);
+
+        while (true) {
+            if (finishedScanning.get() && numFilesFound.get() <= filesHashed.get()) {
+                break;
+            }
+            if (!fileQueue.isEmpty() || numberActiveThreads.get() <= Runtime.getRuntime().availableProcessors()) {
+                Thread thread = new Thread(() -> {
+                   numberActiveThreads.incrementAndGet();
+                   FileEntry fileEntry = fileQueue.poll();
+                   assert fileEntry != null;
+
+                   try {
+                        FileReader reader = new FileReader(fileEntry.getPath());
+                        int fileHash = reader.hashCode();
+                   } catch (FileNotFoundException i) {
+
+                   }
+                });
+            }
+
+        }
+    }
+
+
+
 }

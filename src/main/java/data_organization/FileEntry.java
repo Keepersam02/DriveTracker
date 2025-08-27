@@ -1,5 +1,6 @@
 package data_organization;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -8,41 +9,59 @@ import java.util.Objects;
 public class FileEntry {
     private String name;
     private String path;
-    private boolean isDirectory;
+    private int isDirectory;
     private long size;
-    private String hash;
+    private int hash;
     private long lastModified;
     private long dateCreated;
+    private int parentID;
+    private FileEntry parentFile;
+    private ArrayList<FileEntry> childrenFiles;
 
-    ArrayList<FileEntry> subFileEntries;
+    public FileEntry(String name, String path, int isDirectory, long size, int hash, long lastModified, long dateCreated, int parentID, FileEntry parentFile, ArrayList<FileEntry> childrenFiles) {
+        this.name = name;
+        this.path = path;
+        this.isDirectory = isDirectory;
+        this.size = size;
+        this.hash = hash;
+        this.lastModified = lastModified;
+        this.dateCreated = dateCreated;
+        this.parentID = parentID;
+        this.parentFile = parentFile;
+        this.childrenFiles = childrenFiles;
+    }
+
+    public FileEntry(String name, String path, int isDirectory, long size, int hash, long lastModified, long dateCreated) {
+        this.name = name;
+        this.path = path;
+        this.isDirectory = isDirectory;
+        this.size = size;
+        this.hash = hash;
+        this.lastModified = lastModified;
+        this.dateCreated = dateCreated;
+    }
 
     public FileEntry() {
     }
 
-    public FileEntry(String name, String path) {
-        this.name = name;
-        this.path = path;
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || getClass() != object.getClass()) return false;
+        FileEntry fileEntry = (FileEntry) object;
+        return isDirectory == fileEntry.isDirectory && size == fileEntry.size && hash == fileEntry.hash && lastModified == fileEntry.lastModified && dateCreated == fileEntry.dateCreated && parentID == fileEntry.parentID && Objects.equals(name, fileEntry.name) && Objects.equals(path, fileEntry.path) && Objects.equals(parentFile, fileEntry.parentFile) && Objects.equals(childrenFiles, fileEntry.childrenFiles);
     }
 
-    public FileEntry(String name, String path, boolean isDirectory, long size, String hash, long lastModified, long dateCreated, ArrayList<FileEntry> subFileEntries) {
-        this.name = name;
-        this.path = path;
-        this.isDirectory = isDirectory;
-        this.size = size;
-        this.hash = hash;
-        this.lastModified = lastModified;
-        this.dateCreated = dateCreated;
-        this.subFileEntries = subFileEntries;
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, path, isDirectory, size, hash, lastModified, dateCreated, parentID, parentFile, childrenFiles);
     }
 
-    public FileEntry(String name, String path, boolean isDirectory, long size, String hash, long lastModified, long dateCreated) {
-        this.name = name;
-        this.path = path;
-        this.isDirectory = isDirectory;
-        this.size = size;
-        this.hash = hash;
-        this.lastModified = lastModified;
-        this.dateCreated = dateCreated;
+    public int getParentID() {
+        return parentID;
+    }
+
+    public void setParentID(int parentID) {
+        this.parentID = parentID;
     }
 
     public String getName() {
@@ -61,11 +80,11 @@ public class FileEntry {
         this.path = path;
     }
 
-    public boolean isDirectory() {
+    public int getIsDirectory() {
         return isDirectory;
     }
 
-    public void setDirectory(boolean directory) {
+    public void setIsDirectory(int directory) {
         isDirectory = directory;
     }
 
@@ -77,11 +96,11 @@ public class FileEntry {
         this.size = size;
     }
 
-    public String getHash() {
+    public int getHash() {
         return hash;
     }
 
-    public void setHash(String hash) {
+    public void setHash(int hash) {
         this.hash = hash;
     }
 
@@ -101,23 +120,19 @@ public class FileEntry {
         this.dateCreated = dateCreated;
     }
 
-    public ArrayList<FileEntry> getSubFileEntries() {
-        return subFileEntries;
+    public FileEntry getParentFile() {
+        return parentFile;
     }
 
-    public void setSubFileEntries(ArrayList<FileEntry> subFileEntries) {
-        this.subFileEntries = subFileEntries;
+    public void setParentFile(FileEntry parentFile) {
+        this.parentFile = parentFile;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        FileEntry fileEntry = (FileEntry) o;
-        return isDirectory == fileEntry.isDirectory && size == fileEntry.size && Objects.equals(name, fileEntry.name) && Objects.equals(path, fileEntry.path) && Objects.equals(hash, fileEntry.hash) && Objects.equals(lastModified, fileEntry.lastModified) && Objects.equals(dateCreated, fileEntry.dateCreated) && Objects.equals(subFileEntries, fileEntry.subFileEntries);
+    public ArrayList<FileEntry> getChildrenFiles() {
+        return childrenFiles;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, path, isDirectory, size, hash, lastModified, dateCreated, subFileEntries);
+    public void setChildrenFiles(ArrayList<FileEntry> childrenFiles) {
+        this.childrenFiles = childrenFiles;
     }
 }

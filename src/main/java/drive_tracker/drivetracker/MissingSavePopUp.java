@@ -1,22 +1,13 @@
 package drive_tracker.drivetracker;
 
-import com.google.gson.Gson;
-import data_organization.CentralData;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import javax.swing.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class MissingSavePopUp {
-    CentralData centralData;
     String filePath;
     public void HandleMissingSaveFile(Stage primaryStage) {
         Stage missingSavePopUp = new Stage();

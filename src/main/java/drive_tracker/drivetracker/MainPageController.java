@@ -263,42 +263,12 @@ public class MainPageController {
 
     @FXML
     private void switchToCreateNewDrive(ActionEvent event) {
-        actionMenuCreateNewDriveVBox.setDisable(false);
-        actionMenuCreateNewDriveVBox.setMouseTransparent(false);
-        actionMenuCreateNewDriveVBox.setVisible(true);
-        actionMenuCreateNewDriveClientsListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        actionMenuCreateNewDriveProjectsListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        String url = "jdbc:sqlite:core.db";
-        String clientQryStmt = "SELECT name FROM listItems WHERE isClient = 1";
-        String projQryStmt = "SELECT name FROM listItems WHERE isClient = 0";
-
-        try (var conn = DriverManager.getConnection(url); var stmt = conn.prepareStatement(clientQryStmt); var projStmt = conn.prepareStatement(projQryStmt)) {
-            var rs = stmt.executeQuery();
-            actionMenuCreateNewDriveClientsListView.getItems().clear();
-            while (rs.next()) {
-                actionMenuCreateNewDriveClientsListView.getItems().add(rs.getString(1));
-            }
-            rs = projStmt.executeQuery();
-            actionMenuCreateNewDriveProjectsListView.getItems().clear();
-            while (rs.next()) {
-                actionMenuCreateNewDriveProjectsListView.getItems().add(rs.getString(1));
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
     }
 
     @FXML
     private void switchAwayFromNewDrive(ActionEvent event) {
-        actionMenuCreateNewDriveVBox.setVisible(false);
-        actionMenuCreateNewDriveVBox.setDisable(true);
-        actionMenuCreateNewDriveVBox.setMouseTransparent(true);
 
-        clientsAndProjectsPane.setDisable(false);
-        clientsAndProjectsPane.setOpacity(1);
-        driveListPane.setDisable(false);
-        driveListPane.setOpacity(1);
     }
 
     @FXML
@@ -308,44 +278,11 @@ public class MainPageController {
 
     @FXML
     private void onAMCreateDriveConfirmClick(ActionEvent event) {
-        String driveName = actionMenuCreateNewDriveNameTextField.getText();
-        if (driveName.isEmpty()) {
-            actionMenuCreateDriveWarningText.setText("Please enter a unique name for the drive");
-            return;
-        }
-        String description = actionMenuCreateNewDriveDescriptionTextArea.getText();
 
-        ObservableList<String> listItemNames = actionMenuCreateNewDriveClientsListView.getSelectionModel().getSelectedItems();
-        listItemNames.addAll(actionMenuCreateNewProjectList.getSelectionModel().getSelectedItems());
-
-        try {
-            DBManagement.insertNewDrive(driveName, description);
-            DBManagement.updateDriveClientMap(driveName, listItemNames);
-        } catch (SQLException s) {
-            if (s.getMessage().contains("UNIQUE constraint failed")) {
-                actionMenuCreateDriveWarningText.setText("Please enter a unique drive name.");
-                return;
-            }
-            actionMenuCreateDriveWarningText.setText("An error occurred in saving the new Drive.  Please try again.");
-            return;
-        }
-        actionMenuCreateNewDriveNameTextField.setText("");
-        actionMenuCreateNewDriveDescriptionTextArea.setText("");
-        actionMenuCreateDriveWarningText.setText("");
-        switchAwayFromNewDrive(event);
     }
 
     @FXML
     private void onAMCreateDriveCancelClick(ActionEvent event) {
-        actionMenuCreateNewDriveDescriptionTextArea.setText("");
-        actionMenuCreateNewDriveNameTextField.setText("");
 
-        switchAwayFromNewDrive(event);
     }
-
-    @FXML
-    private TableView<String> viewDriveTableView;
-
-    @FXML
-    private TableColumn<String> viewDriveCurrentTableCollum, view;
 }

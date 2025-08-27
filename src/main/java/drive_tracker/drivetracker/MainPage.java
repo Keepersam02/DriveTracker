@@ -72,30 +72,4 @@ public class MainPage extends Application {
             e.printStackTrace();
         }
     }
-
-    public void addNewClient(Client newClient) throws IllegalArgumentException {
-        CentralData data = CentralData.getInstance();
-        for (ListItem item : data.getDataStorage()) {
-            if (item.getClass() == Client.class) {
-                if (item.interfaceGetName().equals(newClient.getName())) {
-                    throw new IllegalArgumentException("Client of the same name already exists.");
-                }
-            }
-        }
-        data.getDataStorage().add(newClient);
-        CentralData.setInstance(data);
-    }
-
-    public void addNewProject(Project newProject) throws IllegalArgumentException {
-        CentralData data = CentralData.getInstance();
-        for (ListItem item : data.getDataStorage()) {
-            if (item.getClass() == Project.class) {
-                if (item.interfaceGetName().equals(newProject.getName())) {
-                    throw new IllegalArgumentException("Project with the same name already exists");
-                }
-            }
-        }
-    }
-
-
 }

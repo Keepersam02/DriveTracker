@@ -1,9 +1,21 @@
 package data_organization;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class FileEntry {
@@ -17,6 +29,7 @@ public class FileEntry {
     private int parentID;
     private FileEntry parentFile;
     private ArrayList<FileEntry> childrenFiles;
+    private String fileHash;
 
     public FileEntry(String name, String path, int isDirectory, long size, int hash, long lastModified, long dateCreated, int parentID, FileEntry parentFile, ArrayList<FileEntry> childrenFiles) {
         this.name = name;
@@ -51,9 +64,44 @@ public class FileEntry {
         return isDirectory == fileEntry.isDirectory && size == fileEntry.size && hash == fileEntry.hash && lastModified == fileEntry.lastModified && dateCreated == fileEntry.dateCreated && parentID == fileEntry.parentID && Objects.equals(name, fileEntry.name) && Objects.equals(path, fileEntry.path) && Objects.equals(parentFile, fileEntry.parentFile) && Objects.equals(childrenFiles, fileEntry.childrenFiles);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, path, isDirectory, size, hash, lastModified, dateCreated, parentID, parentFile, childrenFiles);
+    public byte[] hashFileContents() throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            FileInputStream fileStream = new FileInputStream(new File(this.path));
+            DigestInputStream digestStream = new DigestInputStream(fileStream, digest);
+
+            byte[] buffer = new byte[8192];
+            while (digestStream.read(buffer) != -1) {}
+            return digest.digest();
+        } catch (IOException i) {
+            throw new IOException(i);
+        } catch (NoSuchAlgorithmException n) {
+            System.out.println("Bad algo");
+        }
+        return null;
+    }
+
+    public String hashFullFile(byte[] contentHash) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            File file = new File(this.path);
+            BasicFileAttributes attributes = Files.readAttributes(Path.of(this.getPath()), BasicFileAttributes.class);
+            ByteBuffer bBuffer = ByteBuffer.allocate(Long.BYTES);
+            bBuffer.putLong(attributes.size());
+            byte[] sizeArr = bBuffer.array();
+            digest.update(contentHash);
+
+            digest.update(file.getName().getBytes(StandardCharsets.UTF_8));
+            digest.update(file.getAbsolutePath().getBytes(StandardCharsets.UTF_8));
+            digest.update(sizeArr);
+
+            return Arrays.toString(digest.digest());
+        } catch (IOException i) {
+
+         } catch (NoSuchAlgorithmException n) {
+
+        }
+        return null;
     }
 
     public int getParentID() {

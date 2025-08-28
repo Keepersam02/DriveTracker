@@ -36,24 +36,7 @@ public class MainPageController {
         actionMenuCreateNewDriveVBox.setMouseTransparent(true);
 
         updateHomePane();
-
-        /*String url = "jdbc:sqlite:core.db";
-        var listItemQueryStmt = "SELECT name FROM listItems;";
-        var driveQrStmt = "SELECT driveName FROM drives;";
-
-        try (var conn = DriverManager.getConnection(url); var stmt = conn.createStatement(); var rs = stmt.executeQuery(listItemQueryStmt); var ns = stmt.executeQuery(driveQrStmt)) {
-            while (rs.next()) {
-                itemListView.getItems().add(rs.getString(1));
-            }
-            while (ns.next()) {
-                driveListView.getItems().add(ns.getString("driveName"));
-            }
-        } catch (SQLException e) {
-            System.out.println("Init");
-            System.out.println(e.getMessage());
-        }*/
-
-    }
+     }
 
     @FXML
     public void updateHomePane() {
@@ -245,7 +228,6 @@ public class MainPageController {
     @FXML
     private VBox actionMenuCreateNewDriveVBox;
 
-
     @FXML
     private TextField actionMenuCreateNewDriveNameTextField;
 
@@ -263,12 +245,37 @@ public class MainPageController {
 
     @FXML
     private void switchToCreateNewDrive(ActionEvent event) {
+        actionMenuCreateNewDriveVBox.setVisible(true);
+        actionMenuCreateNewDriveVBox.setMouseTransparent(false);
 
+        actionMenuCreateNewDriveClientsListView.getItems().clear();
+        actionMenuCreateNewDriveProjectsListView.getItems().clear();
+
+        String url = "jdbc:sqlite:core.db";
+        String getClientsStr = "SELECT name FROM listItems WHERE isClient = 1";
+        String getProjectsStr = "SELECT name FROM listItems WHERE isClient = 0";
+        try (var conn = DriverManager.getConnection(url); var getClientsStmt = conn.prepareStatement(getClientsStr); var getProjectsStmt = conn.prepareStatement(getProjectsStr)) {
+            var clientRS = getClientsStmt.executeQuery();
+            var projectsRS = getProjectsStmt.executeQuery();
+
+            while (clientRS.next()) {
+                actionMenuCreateNewDriveClientsListView.getItems().add(clientRS.getString(1));
+            }
+            while (projectsRS.next()) {
+                actionMenuCreateNewDriveProjectsListView.getItems().add(projectsRS.getString(1));
+            }
+        } catch (SQLException s) {
+
+        }
     }
 
     @FXML
     private void switchAwayFromNewDrive(ActionEvent event) {
+        actionMenuCreateNewDriveVBox.setVisible(false);
+        actionMenuCreateNewDriveVBox.setMouseTransparent(true);
 
+        actionMenuCreateNewDriveNameTextField.setText("");
+        actionMenuCreateNewDriveDescriptionTextArea.setText("");
     }
 
     @FXML
@@ -278,11 +285,59 @@ public class MainPageController {
 
     @FXML
     private void onAMCreateDriveConfirmClick(ActionEvent event) {
+        if (actionMenuCreateNewDriveNameTextField.getText().isEmpty()) {
+            actionMenuCreateDriveWarningText.setText("Please enter a name");
+            return;
+        }
+
+        String url = "jdbc:sqlite:core.db";
+        String insertStr = "INSERT INTO drives(driveName, description, dateCreated, dateLastModified) VALUES(?,?,?,?)";
+        try (var conn = DriverManager.getConnection(url); var insStmt = conn.prepareStatement(insertStr);) {
+            insStmt.setString(1, actionMenuCreateNewDriveNameTextField.getText());
+            insStmt.setString(2, actionMenuCreateNewDriveDescriptionTextArea.getText());
+            insStmt.setLong(3, System.currentTimeMillis());
+            insStmt.setLong(4, System.currentTimeMillis());
+            insStmt.executeUpdate();
+        } catch (SQLException s) {
+            if (s.getErrorCode() == 19) {
+                actionMenuCreateDriveWarningText.setText("A drive by the same name already exists.  PLease use unique names.");
+                return;
+            }
+            actionMenuCreateDriveWarningText.setText("Failed to add drive to database.");
+            return;
+        }
+
+        String insertMapStr = "INSERT INTO driveMap(clientID, driveID, dateAssociated) VALUES(?,?,?)";
+        String getDriveID = "SELECT driveID FROM drives WHERE driveName = ?";
+        String getClientID = "SELECT clientID FROM listItems WHERE name = ?";
+        try (var conn = DriverManager.getConnection(url); var insertMapStmt = conn.prepareStatement(insertMapStr);
+             var getDriveIDStmt = conn.prepareStatement(getDriveID); var getClientIDSt = conn.prepareStatement(getClientID)) {
+            getDriveIDStmt.setString(1, actionMenuCreateNewDriveNameTextField.getText());
+            var rs = getDriveIDStmt.executeQuery();
+            int driveID = rs.getInt(1);
+
+            for (String name : actionMenuCreateNewDriveClientsListView.getSelectionModel().getSelectedItems()) {
+                getClientIDSt.setString(1, name);
+                var clientRS = getClientIDSt.executeQuery();
+                insertMapStmt.setInt(1, clientRS.getInt(1));
+                insertMapStmt.setInt(2, driveID);
+                insertMapStmt.setLong(3, System.currentTimeMillis());
+            }
+            for (String name : actionMenuCreateNewDriveProjectsListView.getSelectionModel().getSelectedItems()) {
+                getClientIDSt.setString(1, name);
+                var projRS = getClientIDSt.executeQuery();
+                insertMapStmt.setInt(1, projRS.getInt(1));
+                insertMapStmt.setInt(2, driveID);
+                insertMapStmt.setLong(3, System.currentTimeMillis());
+            }
+        } catch (SQLException s) {
+
+        }
 
     }
 
     @FXML
     private void onAMCreateDriveCancelClick(ActionEvent event) {
-
+        switchAwayFromNewDrive(event);
     }
 }

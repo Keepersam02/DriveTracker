@@ -18,6 +18,7 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -248,29 +249,6 @@ public class DBManagement {
                         newEntry.setIsDirectory(0);
                     }
 
-                    String url = "jdbc:sqlite:core.db";
-                    String getParentIDStr = "SELECT fileID FROM files WHERE path = ?";
-                    String insStr = "INSERT INTO files(scanID, parentID, name, path, isDir, dateCreated, dateLastModified, size) VALUES(?,?,?,?,?,?,?,?)";
-                    try (var conn = DriverManager.getConnection(url);
-                         var insStmt = conn.prepareStatement(insStr); var getParentIDStmt = conn.prepareStatement(getParentIDStr)){
-                        getParentIDStmt.setString(1, newEntry.getPath());
-                        var rs = getParentIDStmt.executeQuery();
-                        int parentID = rs.getInt(1);
-                        newEntry.setParentID(parentID);
-
-                        insStmt.setInt(2, scanID);
-                        insStmt.setInt(3, parentID);
-                        insStmt.setString(4, newEntry.getName());
-                        insStmt.setString(5, newEntry.getPath());
-                        insStmt.setInt(6, newEntry.getIsDirectory());
-                        insStmt.setLong(7, newEntry.getDateCreated());
-                        insStmt.setLong(8, newEntry.getLastModified());
-                        insStmt.setLong(9, newEntry.getSize());
-                        insStmt.execute();
-                    } catch (SQLException s) {
-
-                    }
-
                     fileQueue.offer(newEntry);
 
                     return FileVisitResult.CONTINUE;
@@ -292,7 +270,7 @@ public class DBManagement {
         }
     }
 
-    public static void fileHashManager(PriorityBlockingQueue<FileEntry> fileQueue, AtomicBoolean finishedScanning, AtomicInteger numFilesFound, AtomicBoolean finishedHashing) {
+    public static void fileHashManager(PriorityBlockingQueue<FileEntry> fileQueue, BlockingQueue<FileEntry> outputQue, AtomicBoolean finishedScanning, AtomicInteger numFilesFound, AtomicBoolean finishedHashing) {
         AtomicInteger numberActiveThreads = new AtomicInteger(0);
         AtomicInteger filesHashed = new AtomicInteger(0);
 
@@ -306,12 +284,6 @@ public class DBManagement {
                    FileEntry fileEntry = fileQueue.poll();
                    assert fileEntry != null;
 
-                   try {
-                        FileReader reader = new FileReader(fileEntry.getPath());
-                        int fileHash = reader.hashCode();
-                   } catch (FileNotFoundException i) {
-
-                   }
                 });
             }
 

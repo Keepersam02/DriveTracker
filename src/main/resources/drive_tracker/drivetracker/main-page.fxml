@@ -43,7 +43,7 @@
             </MenuBar>
             <StackPane prefHeight="1080.0" prefWidth="200.0">
                <children>
-                  <StackPane fx:id="homePane" alignment="BOTTOM_LEFT" prefHeight="1052.5" prefWidth="1920.0" visible="false">
+                  <StackPane fx:id="homePane" alignment="BOTTOM_LEFT" prefHeight="1052.5" prefWidth="1920.0">
                      <children>
                         <VBox alignment="TOP_CENTER" prefHeight="1080.0" prefWidth="1920.0">
                            <children>
@@ -113,7 +113,7 @@
                                                       <Font name="Microsoft Sans Serif" size="42.0" />
                                                    </font>
                                                 </Text>
-                                                <StackPane fx:id="createNewListItemStackPane" prefHeight="1080.0" prefWidth="200.0">
+                                                <StackPane fx:id="createNewListItemStackPane" prefHeight="1080.0" prefWidth="200.0" visible="false">
                                                    <children>
                                                       <VBox fx:id="createNewClientProjectVbox" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
                                                          <children>
@@ -204,7 +204,7 @@
                                                 </StackPane>
                                              </children>
                                           </VBox>
-                                          <VBox fx:id="actionMenuCreateNewDriveVBox" alignment="TOP_CENTER" disable="true" prefHeight="200.0" prefWidth="100.0" spacing="20.0">
+                                          <VBox fx:id="actionMenuCreateNewDriveVBox" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0" visible="false">
                                              <children>
                                                 <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Action Panel">
                                                    <font>
@@ -254,7 +254,7 @@
                                                 </HBox>
                                                 <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="20.0">
                                                    <children>
-                                                      <Button mnemonicParsing="false" text="Confirm and Scan" />
+                                                      <Button fx:id="actionMenuCreateNewDriveConfirmAndScan" mnemonicParsing="false" text="Confirm and Open" />
                                                       <Button fx:id="actionMenuCreateNewDriveConfirm" mnemonicParsing="false" onAction="#onAMCreateDriveConfirmClick" text="Confirm" />
                                                       <Button fx:id="actionMenuCreateNewDriveCancel" mnemonicParsing="false" onAction="#onAMCreateDriveCancelClick" text="Cancel" />
                                                    </children>
@@ -277,7 +277,7 @@
                         </VBox>
                      </children>
                   </StackPane>
-                  <StackPane mouseTransparent="true" prefHeight="1052.5" prefWidth="1920.0">
+                  <StackPane mouseTransparent="true" prefHeight="1052.5" prefWidth="1920.0" visible="false">
                      <children>
                         <HBox disable="true" prefHeight="100.0" prefWidth="200.0">
                            <children>

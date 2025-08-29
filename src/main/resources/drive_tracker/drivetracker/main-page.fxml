@@ -88,7 +88,7 @@
                                                 <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="15.0">
                                                    <children>
                                                       <Button fx:id="driveCreateNewButton" mnemonicParsing="false" onAction="#onDriveCreateNewButton" text="Create New" />
-                                                      <Button fx:id="driveCreateNewButton" mnemonicParsing="false" text="View Drive" />
+                                                      <Button fx:id="viewDriveButton" mnemonicParsing="false" onAction="#onViewDriveButtonClick" text="View Drive" />
                                                    </children>
                                                 </HBox>
                                              </children>
@@ -277,9 +277,9 @@
                         </VBox>
                      </children>
                   </StackPane>
-                  <StackPane mouseTransparent="true" prefHeight="1052.5" prefWidth="1920.0" visible="false">
+                  <StackPane fx:id="viewDriveStackPane" mouseTransparent="true" prefHeight="1052.5" prefWidth="1920.0" visible="false">
                      <children>
-                        <HBox disable="true" prefHeight="100.0" prefWidth="200.0">
+                        <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="720.0" spacing="20.0">
                                  <children>
@@ -293,7 +293,7 @@
                                           <Font size="36.0" />
                                        </font>
                                     </Text>
-                                    <Text strokeType="OUTSIDE" strokeWidth="0.0">
+                                    <Text fx:id="driveViewNameText" strokeType="OUTSIDE" strokeWidth="0.0">
                                        <font>
                                           <Font name="Microsoft Sans Serif" size="24.0" />
                                        </font>
@@ -303,7 +303,7 @@
                                           <Font size="36.0" />
                                        </font>
                                     </Text>
-                                    <Text strokeType="OUTSIDE" strokeWidth="0.0">
+                                    <Text fx:id="driveViewDescriptionText" strokeType="OUTSIDE" strokeWidth="0.0">
                                        <font>
                                           <Font size="24.0" />
                                        </font>
@@ -318,7 +318,7 @@
                                           <Font size="36.0" />
                                        </font>
                                     </Text>
-                                    <ListView prefHeight="500.0" prefWidth="200.0" />
+                                    <ListView fx:id="driveViewOwnerListView" prefHeight="500.0" prefWidth="200.0" />
                                  </children>
                                  <HBox.margin>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -334,11 +334,11 @@
                                           <Font size="46.0" />
                                        </font>
                                     </Text>
-                                    <ListView prefHeight="720.0" prefWidth="200.0" />
+                                    <ListView fx:id="driveViewScanListView" prefHeight="720.0" prefWidth="200.0" />
                                     <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="30.0">
                                        <children>
                                           <Button mnemonicParsing="false" text="View" />
-                                          <Button mnemonicParsing="false" text="New" />
+                                          <Button fx:id="driveViewCreateNewScanButton" mnemonicParsing="false" onAction="#onDriveViewCreateNewScanButtonClick" text="New" />
                                        </children>
                                     </HBox>
                                     <Button mnemonicParsing="false" text="Compare" />
@@ -347,7 +347,7 @@
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                  </padding>
                               </VBox>
-                              <TableView prefHeight="200.0" prefWidth="890.0">
+                              <TableView prefHeight="200.0" prefWidth="890.0" visible="false">
                                 <columns>
                                   <TableColumn prefWidth="295.0" text="Current" />
                                   <TableColumn prefWidth="295.0" text="Children" />

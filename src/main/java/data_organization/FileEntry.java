@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.Objects;
 
 public class FileEntry {
@@ -23,15 +24,13 @@ public class FileEntry {
     private String path;
     private int isDirectory;
     private long size;
-    private int hash;
+    private String hash;
     private long lastModified;
     private long dateCreated;
     private int parentID;
-    private FileEntry parentFile;
-    private ArrayList<FileEntry> childrenFiles;
-    private String fileHash;
+    private String parentPath;
 
-    public FileEntry(String name, String path, int isDirectory, long size, int hash, long lastModified, long dateCreated, int parentID, FileEntry parentFile, ArrayList<FileEntry> childrenFiles) {
+    public FileEntry(String name, String path, int isDirectory, long size, String hash, long lastModified, long dateCreated, int parentID, String parentPath) {
         this.name = name;
         this.path = path;
         this.isDirectory = isDirectory;
@@ -40,11 +39,10 @@ public class FileEntry {
         this.lastModified = lastModified;
         this.dateCreated = dateCreated;
         this.parentID = parentID;
-        this.parentFile = parentFile;
-        this.childrenFiles = childrenFiles;
+        this.parentPath = parentPath;
     }
 
-    public FileEntry(String name, String path, int isDirectory, long size, int hash, long lastModified, long dateCreated) {
+    public FileEntry(String name, String path, int isDirectory, long size, String hash, long lastModified, long dateCreated) {
         this.name = name;
         this.path = path;
         this.isDirectory = isDirectory;
@@ -54,15 +52,19 @@ public class FileEntry {
         this.dateCreated = dateCreated;
     }
 
+    public FileEntry(String name, String path,long size, long lastModified, long dateCreated) {
+        this.name = name;
+        this.path = path;
+        this.isDirectory = isDirectory;
+        this.size = size;
+        this.lastModified = lastModified;
+        this.dateCreated = dateCreated;
+    }
+
     public FileEntry() {
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (object == null || getClass() != object.getClass()) return false;
-        FileEntry fileEntry = (FileEntry) object;
-        return isDirectory == fileEntry.isDirectory && size == fileEntry.size && hash == fileEntry.hash && lastModified == fileEntry.lastModified && dateCreated == fileEntry.dateCreated && parentID == fileEntry.parentID && Objects.equals(name, fileEntry.name) && Objects.equals(path, fileEntry.path) && Objects.equals(parentFile, fileEntry.parentFile) && Objects.equals(childrenFiles, fileEntry.childrenFiles);
-    }
+
 
     public byte[] hashFileContents() throws IOException {
         try {
@@ -76,12 +78,11 @@ public class FileEntry {
         } catch (IOException i) {
             throw new IOException(i);
         } catch (NoSuchAlgorithmException n) {
-            System.out.println("Bad algo");
+            throw new RuntimeException();
         }
-        return null;
     }
 
-    public String hashFullFile(byte[] contentHash) {
+    public void hashFullFile(byte[] contentHash) throws IOException {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             File file = new File(this.path);
@@ -94,14 +95,15 @@ public class FileEntry {
             digest.update(file.getName().getBytes(StandardCharsets.UTF_8));
             digest.update(file.getAbsolutePath().getBytes(StandardCharsets.UTF_8));
             digest.update(sizeArr);
+            byte[] fileHash = digest.digest();
 
-            return Arrays.toString(digest.digest());
+            HexFormat format = HexFormat.of();
+            this.hash = format.formatHex(fileHash);
         } catch (IOException i) {
-
+            throw new IOException(i);
          } catch (NoSuchAlgorithmException n) {
-
+            throw new RuntimeException();
         }
-        return null;
     }
 
     public int getParentID() {
@@ -144,11 +146,11 @@ public class FileEntry {
         this.size = size;
     }
 
-    public int getHash() {
+    public String getHash() {
         return hash;
     }
 
-    public void setHash(int hash) {
+    public void setHash(String hash) {
         this.hash = hash;
     }
 
@@ -168,19 +170,11 @@ public class FileEntry {
         this.dateCreated = dateCreated;
     }
 
-    public FileEntry getParentFile() {
-        return parentFile;
+    public String getParentPath() {
+        return parentPath;
     }
 
-    public void setParentFile(FileEntry parentFile) {
-        this.parentFile = parentFile;
-    }
-
-    public ArrayList<FileEntry> getChildrenFiles() {
-        return childrenFiles;
-    }
-
-    public void setChildrenFiles(ArrayList<FileEntry> childrenFiles) {
-        this.childrenFiles = childrenFiles;
+    public void setParentPath(String parentPath) {
+        this.parentPath = parentPath;
     }
 }

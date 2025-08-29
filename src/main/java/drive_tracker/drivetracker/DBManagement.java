@@ -18,6 +18,7 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -224,9 +225,74 @@ public class DBManagement {
         }
     }
 
-    public static void scanDrive(String filePath, int scanID, PriorityBlockingQueue<FileEntry> fileQueue, AtomicBoolean finishedScanning, AtomicInteger numFilesFound) {
+    public static Drive getDrive(String driveName) throws SQLException {
+        String url = "jdbc:sqlite:core.db";
+        String getDriveStr = "SELECT driveID, description FROM drives WHERE driveName = ?";
+        String belongsToStr = "SELECT clientID FROM driveMap WHERE driveID = ?";
+
+        try (var conn = DriverManager.getConnection(url); var getDriveStmt = conn.prepareStatement(getDriveStr);
+        var belongsToStmt = conn.prepareStatement(belongsToStr)) {
+            getDriveStmt.setString(1, driveName);
+            var driveRS = getDriveStmt.executeQuery();
+            Drive drive = new Drive();
+            drive.setDriveID(driveRS.getInt(1));
+            drive.setDescription(driveRS.getString(2));
+            return drive;
+        } catch (SQLException s) {
+            throw new SQLException(s);
+        }
+    }
+
+    public static ArrayList<Integer> getDrivesScans(String driveName) throws SQLException{
+        String url = "jdbc:sqlite:core.db";
+        String getDriveIDStr = "SELECT driveID FROM drives WHERE driveName = ?";
+        String getScansStr = "SELECT scanID FROM scans WHERE driveID = ?";
+        try (var conn = DriverManager.getConnection(url); var getDriveStmt = conn.prepareStatement(getDriveIDStr);
+        var getScansStmt = conn.prepareStatement(getScansStr)) {
+            getDriveStmt.setString(1, driveName);
+            var driveIDRS = getDriveStmt.executeQuery();
+
+            getScansStmt.setInt(1, driveIDRS.getInt(1));
+            var scanRS = getScansStmt.executeQuery();
+            ArrayList<Integer> scanIDs = new ArrayList<>();
+            while (scanRS.next()) {
+                scanIDs.add(scanRS.getInt(1));
+            }
+            return scanIDs;
+        } catch (SQLException s) {
+            throw new SQLException(s);
+        }
+    }
+
+    public static ArrayList<String> getDrivesOwners(int driveID) throws SQLException{
+        String url = "jdbc:sqlite:core.db";
+        String getClientIDsStr = "SELECT clientID FROM driveMap WHERE driveID = ?";
+        String getClientStr = "SELECT name FROM listItems WHERE listItemID = ?";
+        ArrayList<String> listItemNames = new ArrayList<>();
+
+        try (var conn = DriverManager.getConnection(url); var getClientIDsStmt = conn.prepareStatement(getClientIDsStr);
+        var getClientStmt = conn.prepareStatement(getClientStr)) {
+
+            getClientIDsStmt.setInt(1, driveID);
+            var clientIDRS = getClientIDsStmt.executeQuery();
+            while (clientIDRS.next()) {
+                getClientStmt.setInt(1, clientIDRS.getInt(1));
+                var clientRS = getClientStmt.executeQuery();
+                listItemNames.add(clientRS.getString(1));
+            }
+            return listItemNames;
+        } catch (SQLException s) {
+            throw new SQLException(s);
+        }
+    }
+
+
+
+
+    public static void scanDrive(String filePath, int scanID, Map<String, Long> fileMap, PriorityBlockingQueue<FileEntry> fileQueue, AtomicBoolean finishedScanning, AtomicInteger numFilesFound) {
         finishedScanning.compareAndSet(false, false);
         numFilesFound.compareAndSet(0, 0);
+        final long[] fileIndex = {0};
 
         try {
             Files.walkFileTree(Path.of(filePath), new FileVisitor<Path>() {
@@ -236,21 +302,22 @@ public class DBManagement {
                 }
 
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    FileEntry newEntry = new FileEntry();
-                    newEntry.setName(file.getFileName().toString());
-                    newEntry.setPath(file.toString());
-                    newEntry.setDateCreated(attrs.creationTime().toMillis());
-                    newEntry.setLastModified(attrs.lastModifiedTime().toMillis());
-                    newEntry.setSize(attrs.size());
+                public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                    FileEntry newEntry = new FileEntry(path.getFileName().toString(), path.toAbsolutePath().toString(),
+                            attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
+
                     if (attrs.isDirectory()) {
                         newEntry.setIsDirectory(1);
                     } else {
                         newEntry.setIsDirectory(0);
                     }
+                    newEntry.setParentPath(path.getParent().toAbsolutePath().toString());
+
+                    fileMap.put(newEntry.getPath(), fileIndex[0]);
 
                     fileQueue.offer(newEntry);
 
+                    fileIndex[0]++;
                     return FileVisitResult.CONTINUE;
                 }
 
@@ -280,10 +347,19 @@ public class DBManagement {
             }
             if (!fileQueue.isEmpty() || numberActiveThreads.get() <= Runtime.getRuntime().availableProcessors()) {
                 Thread thread = new Thread(() -> {
-                   numberActiveThreads.incrementAndGet();
-                   FileEntry fileEntry = fileQueue.poll();
-                   assert fileEntry != null;
+                    try {
+                        numberActiveThreads.incrementAndGet();
+                        FileEntry fileEntry = fileQueue.take();
+                        assert fileEntry != null;
 
+                        byte[] contentHash = fileEntry.hashFileContents();
+                        fileEntry.hashFullFile(contentHash);
+                        outputQue.put(fileEntry);
+                   } catch (IOException i) {
+
+                   } catch (InterruptedException x) {
+
+                   }
                 });
             }
 

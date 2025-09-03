@@ -17,9 +17,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -286,10 +288,28 @@ public class DBManagement {
         }
     }
 
+    public static int createNewScan(long dateScan, int driveID) throws SQLException{
+        String url = "jdbc:sqlite:core.db";
+        String insertScanStr = "INSERT INTO scans(dateScan, driveID) VALUES(?,?)";
+        try (var conn = DriverManager.getConnection(url); var insertScanStmt = conn.prepareStatement(insertScanStr, Statement.RETURN_GENERATED_KEYS)) {
+            insertScanStmt.setLong(1, dateScan);
+            insertScanStmt.setInt(2, driveID);
+            insertScanStmt.execute();
 
+            try (var generatedKeys = insertScanStmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1);
+                } else {
+                    throw new SQLException("Could not get scanID");
+                }
+            }
+        } catch (SQLException s) {
+            throw new SQLException(s);
+        }
+    }
 
-
-    public static void scanDrive(String filePath, int scanID, Map<String, Long> fileMap, PriorityBlockingQueue<FileEntry> fileQueue, AtomicBoolean finishedScanning, AtomicInteger numFilesFound) {
+    public static void scanDrive(String filePath, int scanID, Map<String, Integer> fileMap, PriorityBlockingQueue<FileEntry> fileQueue,
+                                 AtomicBoolean finishedScanning, AtomicInteger numFilesFound) {
         finishedScanning.compareAndSet(false, false);
         numFilesFound.compareAndSet(0, 0);
         final long[] fileIndex = {0};
@@ -337,7 +357,8 @@ public class DBManagement {
         }
     }
 
-    public static void fileHashManager(PriorityBlockingQueue<FileEntry> fileQueue, BlockingQueue<FileEntry> outputQue, AtomicBoolean finishedScanning, AtomicInteger numFilesFound, AtomicBoolean finishedHashing) {
+    public static void fileHashManager(PriorityBlockingQueue<FileEntry> fileQueue, ConcurrentLinkedQueue<FileEntry> outputQue, AtomicBoolean finishedScanning,
+                                       AtomicInteger numFilesFound, AtomicBoolean finishedHashing)  {
         AtomicInteger numberActiveThreads = new AtomicInteger(0);
         AtomicInteger filesHashed = new AtomicInteger(0);
 
@@ -354,7 +375,7 @@ public class DBManagement {
 
                         byte[] contentHash = fileEntry.hashFileContents();
                         fileEntry.hashFullFile(contentHash);
-                        outputQue.put(fileEntry);
+                        outputQue.offer(fileEntry);
                    } catch (IOException i) {
 
                    } catch (InterruptedException x) {
@@ -366,6 +387,33 @@ public class DBManagement {
         }
     }
 
+    public static void writeFileEntries(ConcurrentLinkedQueue<FileEntry> finishedFileQueue, Map<String, Integer> fileMap,
+                                        AtomicBoolean finishedScan, AtomicInteger numFilesFound, AtomicBoolean finishedHashing, int scanID) {
+        String url = "jdbc:sqlite:core.db";
+        String insertEntryStr = "INSERT INTO files(scanID, parentID, name, path, isDir, hash, dateCreated, dateLastModified, size)";
+        try (var conn = DriverManager.getConnection(url); var insertEntryStmt = conn.prepareStatement(insertEntryStr)) {
+            int numFilesWritten = 0;
+            FileEntry currentEntry;
+            while (finishedScan.get() && numFilesWritten <= numFilesFound.get() && finishedHashing.get()) {
+                currentEntry = finishedFileQueue.poll();
+                if (currentEntry == null) {
+                    continue;
+                }
+                int parentID = fileMap.remove(currentEntry.getParentPath());
+                insertEntryStmt.setInt(1, scanID);
+                insertEntryStmt.setInt(2, parentID);
+                insertEntryStmt.setString(3, currentEntry.getName());
+                insertEntryStmt.setString(4, currentEntry.getPath());
+                insertEntryStmt.setInt(5, currentEntry.getIsDirectory());
+                insertEntryStmt.setString(6, currentEntry.getHash());
+                insertEntryStmt.setLong(7, currentEntry.getDateCreated());
+                insertEntryStmt.setLong(8, currentEntry.getLastModified());
+                insertEntryStmt.setLong(9, currentEntry.getSize());
+                insertEntryStmt.execute();
+            }
+        } catch (SQLException s) {
 
+        }
+    }
 
 }

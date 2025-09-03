@@ -21,11 +21,15 @@ import org.sqlite.SQLiteErrorCode;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainPageController {
     @FXML
@@ -399,7 +403,7 @@ public class MainPageController {
     private ListView<String> driveViewOwnerListView;
 
     @FXML
-    private Text driveViewNameText, driveViewDescriptionText;
+    private Text driveViewNameText, driveViewDescriptionText, driveViewWarningText;
 
 
     @FXML
@@ -422,10 +426,47 @@ public class MainPageController {
 
         Node source = (Node) event.getSource();
         javafx.stage.Window parentWindow = source.getScene().getWindow();
-
         File selectedFile = fileChooser.showOpenDialog(parentWindow);
 
-        selectedFile.getPath().
+        Path filePath = Path.of(selectedFile.getAbsolutePath());
+        Path driveRoot = filePath.getRoot();
+
+        Drive drive;
+        try {
+            drive = DBManagement.getDrive(driveViewNameText.getText());
+        } catch (SQLException e) {
+            driveViewWarningText.setText("Could not get drive information");
+            return;
+        }
+
+        int scanID;
+        try {
+            scanID = DBManagement.createNewScan(System.currentTimeMillis(), drive.getDriveID());
+        } catch (SQLException e) {
+            //todo log error
+            driveViewWarningText.setText("Failed to create new scan");
+            return;
+        }
+
+        PriorityBlockingQueue<FileEntry> fileQueue = new PriorityBlockingQueue<>();
+        Map<String, Integer> fileMap = new HashMap<>();
+        ConcurrentLinkedQueue<FileEntry> hashedFiles = new ConcurrentLinkedQueue<>();
+
+        AtomicBoolean finishedScanning = new AtomicBoolean(false);
+        AtomicInteger numFilesScanned = new AtomicInteger(0);
+
+        Thread scanThread = new Thread(() -> {
+           DBManagement.scanDrive(driveRoot.toString(), scanID, fileMap, fileQueue, finishedScanning, numFilesScanned);
+        });
+
+        AtomicBoolean finishedHashing = new AtomicBoolean(false);
+        Thread hasThread = new Thread(() -> {
+           DBManagement.fileHashManager(fileQueue, hashedFiles, finishedScanning, numFilesScanned, finishedHashing);
+        });
+
+        Thread writeFileEntries = new Thread(() -> {
+           DBManagement.writeFileEntries(hashedFiles, fileMap, finishedScanning, numFilesScanned);
+        });
 
     }
 }

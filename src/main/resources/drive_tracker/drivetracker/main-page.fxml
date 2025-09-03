@@ -43,7 +43,7 @@
             </MenuBar>
             <StackPane prefHeight="1080.0" prefWidth="200.0">
                <children>
-                  <StackPane fx:id="homePane" alignment="BOTTOM_LEFT" prefHeight="1052.5" prefWidth="1920.0">
+                  <StackPane fx:id="homePane" alignment="BOTTOM_LEFT" prefHeight="1052.5" prefWidth="1920.0" visible="false">
                      <children>
                         <VBox alignment="TOP_CENTER" prefHeight="1080.0" prefWidth="1920.0">
                            <children>
@@ -277,7 +277,7 @@
                         </VBox>
                      </children>
                   </StackPane>
-                  <StackPane fx:id="viewDriveStackPane" mouseTransparent="true" prefHeight="1052.5" prefWidth="1920.0" visible="false">
+                  <StackPane fx:id="viewDriveStackPane" mouseTransparent="true" prefHeight="1052.5" prefWidth="1920.0">
                      <children>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
@@ -319,6 +319,11 @@
                                        </font>
                                     </Text>
                                     <ListView fx:id="driveViewOwnerListView" prefHeight="500.0" prefWidth="200.0" />
+                                    <Text fx:id="driveViewWarningText" strokeType="OUTSIDE" strokeWidth="0.0">
+                                       <font>
+                                          <Font size="24.0" />
+                                       </font>
+                                    </Text>
                                  </children>
                                  <HBox.margin>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

@@ -21,6 +21,9 @@ import org.sqlite.SQLiteErrorCode;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -421,15 +424,27 @@ public class MainPageController {
 
     @FXML
     private void onDriveViewCreateNewScanButtonClick(ActionEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Choose scan root directory");
+        DirectoryChooser directoryChooser= new DirectoryChooser();
+        directoryChooser.setTitle("Choose scan root directory");
 
         Node source = (Node) event.getSource();
         javafx.stage.Window parentWindow = source.getScene().getWindow();
-        File selectedFile = fileChooser.showOpenDialog(parentWindow);
+        File selectedFile = directoryChooser.showDialog(parentWindow);
+        if (selectedFile == null) {
+            driveViewWarningText.setText("Please select a drive to scan.");
+            return;
+        }
 
         Path filePath = Path.of(selectedFile.getAbsolutePath());
-        Path driveRoot = filePath.getRoot();
+        String volumePath = getDrivePath(filePath);
+
+        if (volumePath == null) {
+            driveViewWarningText.setText("Could not get drive associated with directory.");
+            return;
+        } else if (volumePath.equals("/")) {
+            driveViewWarningText.setText("Please select a a drive that is not your computers drive.");
+            return;
+        }
 
         Drive drive;
         try {
@@ -448,15 +463,14 @@ public class MainPageController {
             return;
         }
 
+        ConcurrentLinkedQueue<FileProcessLink> filesToProcess = new ConcurrentLinkedQueue<>();
         PriorityBlockingQueue<FileEntry> fileQueue = new PriorityBlockingQueue<>();
-        Map<String, Integer> fileMap = new HashMap<>();
-        ConcurrentLinkedQueue<FileEntry> hashedFiles = new ConcurrentLinkedQueue<>();
 
         AtomicBoolean finishedScanning = new AtomicBoolean(false);
         AtomicInteger numFilesScanned = new AtomicInteger(0);
 
         Thread scanThread = new Thread(() -> {
-           DBManagement.scanDrive(driveRoot.toString(), scanID, fileMap, fileQueue, finishedScanning, numFilesScanned);
+           DBManagement.scanFileTree(filesToProcess, fileQueue, volumePath, finishedScanning, numFilesScanned);
         });
 
         AtomicBoolean finishedHashing = new AtomicBoolean(false);
@@ -465,8 +479,35 @@ public class MainPageController {
         });
 
         Thread writeFileEntries = new Thread(() -> {
-           DBManagement.writeFileEntries(hashedFiles, fileMap, finishedScanning, numFilesScanned);
+           DBManagement.writeFileEntries(hashedFiles, fileMap, finishedScanning, numFilesScanned, finishedHashing, scanID);
         });
 
+        scanThread.start();
+        hasThread.start();
+        writeFileEntries.start();
+
+    }
+
+    public static String getDrivePath(Path filePath) {
+
+            Path current = filePath.toAbsolutePath();
+            Path previous;
+
+            while (current.getParent() != null) {
+                previous = current;
+                current = current.getParent();
+
+                try {
+                    FileStore currentStore = Files.getFileStore(current);
+                    FileStore previousStore = Files.getFileStore(previous);
+
+                    if (!currentStore.equals(previousStore)) {
+                        return previous.toString();
+                    }
+                } catch (IOException e) {
+                    return previous.toString();
+                }
+            }
+       return null;
     }
 }

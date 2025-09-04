@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Objects;
 
-public class FileEntry {
+public class FileEntry implements Comparable<FileEntry> {
     private String name;
     private String path;
     private int isDirectory;
@@ -30,7 +30,8 @@ public class FileEntry {
     private int parentID;
     private String parentPath;
 
-    public FileEntry(String name, String path, int isDirectory, long size, String hash, long lastModified, long dateCreated, int parentID, String parentPath) {
+    public FileEntry(String name, String path, int isDirectory, long size, String hash,
+                     long lastModified, long dateCreated, int parentID, String parentPath) {
         this.name = name;
         this.path = path;
         this.isDirectory = isDirectory;
@@ -42,7 +43,8 @@ public class FileEntry {
         this.parentPath = parentPath;
     }
 
-    public FileEntry(String name, String path, int isDirectory, long size, String hash, long lastModified, long dateCreated) {
+    public FileEntry(String name, String path, int isDirectory, long size, String hash,
+                     long lastModified, long dateCreated) {
         this.name = name;
         this.path = path;
         this.isDirectory = isDirectory;
@@ -176,5 +178,11 @@ public class FileEntry {
 
     public void setParentPath(String parentPath) {
         this.parentPath = parentPath;
+    }
+
+
+    @Override
+    public int compareTo(FileEntry o) {
+        return Long.compare(this.size, o.size);
     }
 }

@@ -68,6 +68,7 @@ public class DBManagement {
         var fileTableSql = "CREATE TABLE IF NOT EXISTS files ("
                 + "fileID INTEGER PRIMARY KEY,"
                 + "scanID INTEGER NOT NULL,"
+                + "scanFileID INTEGER NOT NULL,"
                 + "parentID INTEGER,"
                 + "name TEXT,"
                 + "path TEXT,"
@@ -78,6 +79,8 @@ public class DBManagement {
                 + "size LONG,"
                 + "FOREIGN KEY(scanID) REFERENCES scans(scanID),"
                 + "FOREIGN KEY(parentID) REFERENCES files(fileID));";
+
+
 
         try (var conn = DriverManager.getConnection(url); var stmt = conn.createStatement()) {
             stmt.execute(coreSql);
@@ -309,106 +312,103 @@ public class DBManagement {
         }
     }
 
-    public static void scanFileTree(ConcurrentLinkedQueue<FileProcessLink> filesToProcess, PriorityBlockingQueue<FileEntry> fileQueue, String drivePath, AtomicBoolean finishedScanning, AtomicInteger filesScanned) {
-        AtomicInteger idCounter = new AtomicInteger(0);
+    public static void scanFileTree(PriorityBlockingQueue<FileEntry> fileQueue, String drivePath, AtomicBoolean finishedScanning, AtomicInteger idCounter) {
         Stack<FileProcessLink> directoryPaths = new Stack<>();
         File homeDirectory = new File(drivePath);
-        directoryPaths.push(new FileProcessLink(homeDirectory.getPath(), idCounter.getAndIncrement()));
+        directoryPaths.push(new FileProcessLink(homeDirectory.getPath(), 0, idCounter.getAndIncrement()));
 
         while (!directoryPaths.isEmpty()) {
             FileProcessLink current = directoryPaths.pop();
-            File currentFile = new File(current.getFilePath());
+            File currentDir = new File(current.getFilePath());
 
-            File[] children = currentFile.listFiles();
-            for (File child : children) {
-                if (child == null) {
-                    continue;
-                }
-                if (child.isDirectory()) {
-                    directoryPaths.push(new FileProcessLink(child.getPath(), current.getParentID()));
-                    filesScanned.incrementAndGet();
-                } else {
-                    filesToProcess.offer(new FileProcessLink(child.getPath(), current.getParentID()));
-                    filesScanned.incrementAndGet();
-                }
+            File[] children = currentDir.listFiles();
+            if (children == null) {
+                continue;
             }
+            for (File child : children) {
+                 BasicFileAttributes basicAttrs;
+                 try {
+                     basicAttrs = Files.readAttributes(Path.of(child.getPath()), BasicFileAttributes.class);
+                 } catch (IOException i) {
+                     System.out.println("Could not get file attributes: " + child.getPath());
+                     System.out.println(i.getMessage());
+                     continue;
+                 }
+                 if (child.isDirectory()) {
+                     directoryPaths.push(new FileProcessLink(child.getPath(), current.getParentID(), idCounter.getAndIncrement()));
+                 } else {
+                    FileEntry newFileEntry = new FileEntry(child.getName(), child.getPath(), 0, basicAttrs.size(), null, basicAttrs.lastModifiedTime().toMillis(),
+                            basicAttrs.creationTime().toMillis(), current.getFileID(), idCounter.getAndIncrement(), null);
+                    fileQueue.offer(newFileEntry);
+                 }
+            }
+            BasicFileAttributes dirAttrs;
+            try {
+                dirAttrs = Files.readAttributes(Path.of(currentDir.getPath()), BasicFileAttributes.class);
+            } catch (IOException e) {
+                System.out.println("Could not get dir attributes: " + currentDir.getPath());
+                System.out.println(e.getMessage());
+                continue;
+            }
+            FileEntry addDir = new FileEntry(currentDir.getName(), currentDir.getPath(), 1, dirAttrs.size(), null, dirAttrs.lastModifiedTime().toMillis(),
+                    dirAttrs.creationTime().toMillis(), current.getParentID(), current.getFileID(), null);
+            fileQueue.offer(addDir);
         }
         finishedScanning.set(true);
     }
 
-    private void processPoolManager(ConcurrentLinkedQueue<FileProcessLink> filesToProcess, PriorityBlockingQueue<FileEntry> fileQueue, AtomicBoolean finishedScanning, AtomicInteger filesFound) {
+    public static void processPoolManager(ConcurrentLinkedQueue<FileEntry> fileOutPut, PriorityBlockingQueue<FileEntry> fileQueue, AtomicBoolean finishedScanning, AtomicInteger filesFound) {
         int filesProcessed = 0;
         AtomicInteger numActiveThreads = new AtomicInteger(0);
+        int availableProcessors = Runtime.getRuntime().availableProcessors() * 3;
         while (true) {
-            if (finishedScanning.get() && filesProcessed >= filesFound.get() && filesToProcess.isEmpty()) {
+            if (finishedScanning.get() && filesProcessed >= filesFound.get() && fileQueue.isEmpty()) {
                 break;
             }
+            if (numActiveThreads.get() >= availableProcessors) {
+                continue;
+            }
             if (finishedScanning.get() && filesProcessed <= filesFound.get()) {
-                Stack<FileProcessLink> processStack = new Stack<>();
-                for (int i = 0; i < filesToProcess.size(); i++) {
-                    processStack.push(filesToProcess.poll());
+                Stack<FileEntry> processStack = new Stack<>();
+                for (int i = 0; i < fileQueue.size(); i++) {
+                    processStack.push(fileQueue.poll());
                 }
                 Thread processThread = new Thread(() -> {
                     numActiveThreads.incrementAndGet();
-                    processFiles(processStack, fileQueue);
+                    processFiles(processStack, fileOutPut);
                     numActiveThreads.decrementAndGet();
                 });
                 processThread.start();
             }
-            if (filesToProcess.size() < 70) {
-                continue;
-            }
-            if (numActiveThreads.get() > 5) {
+            if (fileQueue.size() < 20) {
                 continue;
             }
 
-            Stack<FileProcessLink> processStack = new Stack<>();
-            for (int i = 0; i < 70; i++) {
-                processStack.push(filesToProcess.poll());
+
+            Stack<FileEntry> processStack = new Stack<>();
+            for (int i = 0; i < 20; i++) {
+                processStack.push(fileQueue.poll());
             }
             Thread processThread = new Thread(() -> {
                 numActiveThreads.incrementAndGet();
-                processFiles(processStack, fileQueue);
+                processFiles(processStack, fileOutPut);
                 numActiveThreads.decrementAndGet();
             });
             processThread.start();
         }
     }
 
-    private void processFiles(Stack<FileProcessLink> filePathStack, PriorityBlockingQueue<FileEntry> fileQueue) {
+    private static void processFiles(Stack<FileEntry> filePathStack, ConcurrentLinkedQueue<FileEntry> fileQueue) {
         while (!filePathStack.isEmpty()) {
-            FileProcessLink current = filePathStack.pop();
-            File currentFile = new File(current.getFilePath());
-            if (currentFile.isDirectory()) {
-                FileEntry newDirEntry;
-                try {
-                    BasicFileAttributes attrs = Files.readAttributes(Path.of(currentFile.getPath()), BasicFileAttributes.class);
-                    newDirEntry = new FileEntry(currentFile.getName(), currentFile.getPath(), 1, attrs.size(), null, attrs.lastModifiedTime().toMillis(),
-                            attrs.creationTime().toMillis(), current.getParentID(), null);
-                } catch (IOException e) {
-                    System.out.println("Failed to read attributes: " + currentFile.getPath());
-                    System.out.println(e.getMessage());
-                }
-                continue;
-            }
-            long fileSize;
-            FileEntry newEntry;
-            try {
-                BasicFileAttributes attrs = Files.readAttributes(Path.of(currentFile.getPath()), BasicFileAttributes.class);
-                newEntry = new FileEntry(currentFile.getName(), currentFile.getPath(), 0, attrs.size(), null, attrs.lastModifiedTime().toMillis(),
-                        attrs.creationTime().toMillis(), current.getParentID(), null);
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-                System.out.println(currentFile.getAbsoluteFile());
-                continue;
-            }
-            try {
-                newEntry.hashFullFile(newEntry.hashFileContents());
-            } catch (IOException e) {
-                System.out.println("Failed hashing: " + newEntry.getName());
-                System.out.println(e.getMessage());
-            }
-            fileQueue.offer(newEntry);
+            FileEntry current = filePathStack.pop();
+             try {
+                 current.hashFullFile(current.hashFileContents());
+             } catch (IOException e) {
+                 System.out.println("Failed to hash file: " + current.getPath());
+                 System.out.println(e.getMessage());
+                 continue;
+             }
+             fileQueue.offer(current);
         }
     }
 
@@ -441,121 +441,22 @@ public class DBManagement {
         }
     }
 
-
-
-/*    public static void scanDrive(String filePath, int scanID, ConcurrentHashMap<String, Integer> fileMap, PriorityBlockingQueue<FileEntry> fileQueue,
-                                 AtomicBoolean finishedScanning, AtomicInteger numFilesFound) {
-        finishedScanning.compareAndSet(false, false);
-        numFilesFound.compareAndSet(0, 0);
-
-
-        try {
-            Files.walkFileTree(Path.of(filePath), new FileVisitor<Path>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-                    FileEntry newEntry = new FileEntry(path.getFileName().toString(), path.toAbsolutePath().toString(),
-                            attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
-
-                    if (attrs.isDirectory()) {
-                        newEntry.setIsDirectory(1);
-                    } else {
-                        newEntry.setIsDirectory(0);
-                    }
-                    UUID uuid = UUID.randomUUID();
-                    newEntry.setParentPath(path.getParent().toAbsolutePath().toString());
-
-                    fileMap.put(newEntry.getPath(), fileIndex[0]);
-
-                    fileQueue.offer(newEntry);
-
-                    fileIndex[0]++;
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                    System.out.println("Failed to visit file: " + file.toString());
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            System.out.println("Scan drive error");
-            System.out.println(e.getMessage());
-        }
-    }*/
-
-    public static void fileHashManager(PriorityBlockingQueue<FileEntry> fileQueue, ConcurrentLinkedQueue<FileEntry> outputQue, AtomicBoolean finishedScanning,
-                                       AtomicInteger numFilesFound, AtomicBoolean finishedHashing)  {
-        AtomicInteger numberActiveThreads = new AtomicInteger(0);
-        AtomicInteger filesHashed = new AtomicInteger(0);
-
-        while (true) {
-            if (finishedScanning.get() && numFilesFound.get() <= filesHashed.get()) {
-                break;
-            }
-            if (!fileQueue.isEmpty() || numberActiveThreads.get() <= Runtime.getRuntime().availableProcessors()) {
-                Thread thread = new Thread(() -> {
-                    try {
-                        numberActiveThreads.incrementAndGet();
-                        FileEntry fileEntry = fileQueue.take();
-                        assert fileEntry != null;
-
-                        if (fileEntry.getIsDirectory() == 1) {
-                            fileEntry.setHash("DIRECTORY");
-                            outputQue.offer(fileEntry);
-                            filesHashed.incrementAndGet();
-                            return;
-                        }
-
-                        byte[] contentHash = fileEntry.hashFileContents();
-                        fileEntry.hashFullFile(contentHash);
-                        outputQue.offer(fileEntry);
-                   } catch (IOException i) {
-                        System.out.println("File hash manager error");
-                        System.out.println(i.getMessage());
-                        System.out.println(i.getCause().toString());
-                   } catch (InterruptedException x) {
-                        System.out.println("File hash manager error");
-                        System.out.println(x.getMessage());
-                   }
-                });
-                thread.start();
-            }
-
-        }
-    }
-
     public static void writeFileEntries(ConcurrentLinkedQueue<FileEntry> finishedFileQueue,
                                         AtomicBoolean finishedScan, AtomicInteger numFilesFound, AtomicBoolean finishedHashing, int scanID) {
         String url = "jdbc:sqlite:core.db";
-        String insertEntryStr = "INSERT INTO files(scanID, parentID, name, path, isDir, hash, dateCreated, dateLastModified, size) VALUES(?,?,?,?,?,?,?,?,?)";
-        String getNextRowID = "SELECT seq + 1 FROM sqlite_sequence WHERE name = 'files;";
-        try (var conn = DriverManager.getConnection(url); var insertEntryStmt = conn.prepareStatement(insertEntryStr);
-        var getNextID = conn.prepareStatement(getNextRowID)) {
-            long rowIDOffset;
-            var nextRowRS = getNextID.executeQuery();
-            if (nextRowRS.next()) {
-                rowIDOffset = nextRowRS.getInt(1);
-            } else {
+        String insertEntryStr = "INSERT INTO files(scanID, parentID, name, path, isDir, hash, dateCreated, dateLastModified, size, scanFileID) VALUES(?,?,?,?,?,?,?,?,?,?)";
+        try (var conn = DriverManager.getConnection(url); var insertEntryStmt = conn.prepareStatement(insertEntryStr)) {
 
-            }
             int numFilesWritten = 0;
             FileEntry currentEntry;
             while (!finishedScan.get() && !finishedHashing.get() && numFilesWritten <= numFilesFound.get()) {
                 currentEntry = finishedFileQueue.poll();
+                if (currentEntry == null) {
+                    continue;
+                }
 
                 insertEntryStmt.setInt(1, scanID);
-                insertEntryStmt.setInt(2, currentEntry.getParentID() + rowIDOffset);
+                insertEntryStmt.setInt(2, (int) (currentEntry.getParentID()));
                 insertEntryStmt.setString(3, currentEntry.getName());
                 insertEntryStmt.setString(4, currentEntry.getPath());
                 insertEntryStmt.setInt(5, currentEntry.getIsDirectory());
@@ -563,6 +464,7 @@ public class DBManagement {
                 insertEntryStmt.setLong(7, currentEntry.getDateCreated());
                 insertEntryStmt.setLong(8, currentEntry.getLastModified());
                 insertEntryStmt.setLong(9, currentEntry.getSize());
+                insertEntryStmt.setInt(10, currentEntry.getScanFileID());
                 insertEntryStmt.execute();
                 numFilesWritten++;
             }

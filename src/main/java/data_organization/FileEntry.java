@@ -28,6 +28,7 @@ public class FileEntry implements Comparable<FileEntry> {
     private long lastModified;
     private long dateCreated;
     private int parentID;
+    private int scanFileID;
     private String parentPath;
 
     public FileEntry(String name, String path, int isDirectory, long size, String hash,
@@ -40,6 +41,19 @@ public class FileEntry implements Comparable<FileEntry> {
         this.lastModified = lastModified;
         this.dateCreated = dateCreated;
         this.parentID = parentID;
+        this.parentPath = parentPath;
+    }
+
+    public FileEntry(String name, String path, int isDirectory, long size, String hash, long lastModified, long dateCreated, int parentID, int scanFileID, String parentPath) {
+        this.name = name;
+        this.path = path;
+        this.isDirectory = isDirectory;
+        this.size = size;
+        this.hash = hash;
+        this.lastModified = lastModified;
+        this.dateCreated = dateCreated;
+        this.parentID = parentID;
+        this.scanFileID = scanFileID;
         this.parentPath = parentPath;
     }
 
@@ -106,6 +120,14 @@ public class FileEntry implements Comparable<FileEntry> {
          } catch (NoSuchAlgorithmException n) {
             throw new RuntimeException();
         }
+    }
+
+    public int getScanFileID() {
+        return scanFileID;
+    }
+
+    public void setScanFileID(int scanFileID) {
+        this.scanFileID = scanFileID;
     }
 
     public int getParentID() {

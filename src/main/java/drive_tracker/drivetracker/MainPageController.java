@@ -463,23 +463,23 @@ public class MainPageController {
             return;
         }
 
-        ConcurrentLinkedQueue<FileProcessLink> filesToProcess = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<FileEntry> filesToProcess = new ConcurrentLinkedQueue<>();
         PriorityBlockingQueue<FileEntry> fileQueue = new PriorityBlockingQueue<>();
 
         AtomicBoolean finishedScanning = new AtomicBoolean(false);
         AtomicInteger numFilesScanned = new AtomicInteger(0);
 
         Thread scanThread = new Thread(() -> {
-           DBManagement.scanFileTree(filesToProcess, fileQueue, volumePath, finishedScanning, numFilesScanned);
+           DBManagement.scanFileTree(fileQueue, volumePath, finishedScanning, numFilesScanned);
         });
 
         AtomicBoolean finishedHashing = new AtomicBoolean(false);
         Thread hasThread = new Thread(() -> {
-           DBManagement.fileHashManager(fileQueue, hashedFiles, finishedScanning, numFilesScanned, finishedHashing);
+            DBManagement.processPoolManager(filesToProcess, fileQueue, finishedScanning, numFilesScanned);
         });
 
         Thread writeFileEntries = new Thread(() -> {
-           DBManagement.writeFileEntries(hashedFiles, fileMap, finishedScanning, numFilesScanned, finishedHashing, scanID);
+           DBManagement.writeFileEntries(filesToProcess, finishedScanning, numFilesScanned, finishedHashing, scanID);
         });
 
         scanThread.start();
